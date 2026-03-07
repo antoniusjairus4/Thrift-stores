@@ -691,15 +691,33 @@
     _tt = setTimeout(() => t.classList.remove('show'), 2800);
   }
 
-  // init — auto filter by user's college
+  // init — auto filter by user's college + URL category param
   async function init() {
+    // Check for category in URL e.g. browse.html?category=Textbooks
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlCategory = urlParams.get('category');
+    if (urlCategory) {
+      // Pre-check the matching checkbox
+      const opts = document.querySelectorAll('#body-category .filter-option');
+      opts.forEach(o => {
+        const label = o.querySelector('.filter-label').textContent.trim();
+        const val = o.getAttribute('onclick')?.match(/'([^']+)'\)$/)?.[1];
+        if (val === urlCategory) {
+          o.querySelector('.filter-checkbox').classList.add('checked');
+          filters.categories.push(urlCategory);
+        }
+      });
+      updateActiveTags();
+    }
+
+    // Auto filter by user's college
     const { data: { user } } = await _supabase.auth.getUser();
     if (user) {
       const { data: profile } = await _supabase
         .from('profiles').select('college').eq('id', user.id).single();
       if (profile?.college) {
         setCollegeFilter(profile.college);
-        return; // setCollegeFilter calls fetchListings
+        return;
       }
     }
     fetchListings();
