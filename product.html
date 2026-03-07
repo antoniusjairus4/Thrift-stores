@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const _supabase = supabase.createClient('https://ekdggxmhusdmqbscngjc.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrZGdneG1odXNkbXFic2NuZ2pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NjgwNDIsImV4cCI6MjA4ODQ0NDA0Mn0.l6fx7g-aFJzSaBhElVTXRqzrW64GPkyfGMBn7tkqSX4');
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Campus Thrift — Product Detail</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --navy:#161630;--purple:#7B2D8B;--violet:#C778C8;--blush:#EDE8EE;
+      --navy-mid:#1E1E42;--purple-dark:#5A1F68;
+      --glass:rgba(255,255,255,0.05);--gb:rgba(199,120,200,0.15);
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--blush);min-height:100vh;overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:999;opacity:.28}
+    .orb{position:fixed;border-radius:50%;filter:blur(110px);pointer-events:none;z-index:0}
+    .orb1{width:600px;height:600px;background:radial-gradient(circle,#7B2D8B,transparent 70%);top:-180px;left:-160px;opacity:.28}
+    .orb2{width:400px;height:400px;background:radial-gradient(circle,#C778C8,transparent 70%);bottom:-80px;right:-80px;opacity:.16}
+
+    /* NAV */
+    nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1rem 3.5rem;background:rgba(22,22,48,.88);border-bottom:1px solid rgba(199,120,200,.12);backdrop-filter:blur(20px)}
+    .nav-logo{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;color:var(--blush);text-decoration:none;display:flex;align-items:center;gap:.5rem;letter-spacing:-.02em}
+    .nav-logo-icon{width:30px;height:30px;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:.95rem}
+    .nav-logo span{color:var(--violet);font-style:italic}
+    .nav-back{display:flex;align-items:center;gap:.5rem;font-size:.83rem;color:rgba(199,120,200,.5);text-decoration:none;transition:color .2s;padding:.4rem .8rem;border:1px solid transparent}
+    .nav-back:hover{color:var(--violet);border-color:rgba(199,120,200,.2);background:rgba(199,120,200,.06)}
+    .nav-back::before{content:'←';margin-right:.2rem}
+
+    /* BREADCRUMB */
+    .breadcrumb{position:relative;z-index:1;padding:1.2rem 3.5rem;display:flex;align-items:center;gap:.5rem;font-family:'DM Mono',monospace;font-size:.65rem;color:rgba(199,120,200,.35);letter-spacing:.05em}
+    .breadcrumb a{color:rgba(199,120,200,.45);text-decoration:none;transition:color .2s}
+    .breadcrumb a:hover{color:var(--violet)}
+    .breadcrumb-sep{opacity:.3}
+    .breadcrumb-current{color:rgba(237,232,238,.45)}
+
+    /* LAYOUT */
+    .main{position:relative;z-index:1;padding:0 3.5rem 5rem;max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 370px;gap:3rem;align-items:start}
+
+    /* ── LEFT ── */
+    .product-left{animation:fadeUp .6s ease both}
+
+    /* IMAGE */
+    .image-main{width:100%;aspect-ratio:4/3;background:rgba(28,28,60,.55);border:1px solid rgba(199,120,200,.13);overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.8rem}
+    .image-main img{width:100%;height:100%;object-fit:cover;display:none} /* shown by JS when src is available */
+    .img-placeholder-icon{font-size:2.8rem;opacity:.2}
+    .img-placeholder-text{font-family:'DM Mono',monospace;font-size:.68rem;color:rgba(199,120,200,.22);letter-spacing:.08em;text-transform:uppercase}
+
+    .image-thumbs{display:flex;gap:.6rem;margin-top:.7rem}
+    .thumb{width:68px;height:68px;background:rgba(28,28,60,.55);border:1.5px solid rgba(199,120,200,.1);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .2s;flex-shrink:0}
+    .thumb.active{border-color:var(--violet)}
+    .thumb-placeholder{font-size:1.2rem;opacity:.2}
+
+    /* PRODUCT META */
+    .product-meta{margin-top:2rem}
+    .meta-tags{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem}
+    .tag{font-family:'DM Mono',monospace;font-size:.63rem;letter-spacing:.07em;text-transform:uppercase;padding:.22rem .62rem;border:1px solid}
+    .tag-category{color:rgba(199,120,200,.5);border-color:rgba(199,120,200,.15);background:rgba(199,120,200,.07)}
+    .tag-condition{color:var(--violet);border-color:rgba(199,120,200,.28);background:rgba(123,45,139,.2)}
+    .tag-verified{color:rgba(199,120,200,.45);border-color:rgba(199,120,200,.12);background:transparent;margin-left:auto;display:flex;align-items:center;gap:.3rem}
+    .tag-verified::before{content:'✓';color:var(--violet)}
+
+    .product-title{font-family:'Playfair Display',serif;font-size:clamp(1.5rem,2.4vw,2rem);font-weight:900;color:var(--blush);letter-spacing:-.02em;line-height:1.15;margin-bottom:.6rem}
+    /* loaded from DB — starts empty */
+    .product-title:empty::before{content:'Loading…';color:rgba(237,232,238,.15);font-style:italic;font-size:1.2rem}
+
+    .product-price{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:900;color:var(--violet);margin-bottom:1.5rem}
+    .product-price:empty::before{content:'₹ —';color:rgba(199,120,200,.2)}
+
+    /* DESCRIPTION */
+    .section-label{font-family:'DM Mono',monospace;font-size:.65rem;color:rgba(199,120,200,.42);letter-spacing:.1em;text-transform:uppercase;padding-bottom:.55rem;border-bottom:1px solid rgba(199,120,200,.1);margin-bottom:.85rem}
+    .product-description{font-size:.88rem;color:rgba(237,232,238,.5);line-height:1.9;font-weight:300;margin-bottom:2rem;min-height:60px}
+    .product-description:empty::before{content:'No description provided.';color:rgba(199,120,200,.18);font-style:italic;font-size:.82rem}
+
+    /* DETAILS GRID */
+    .details-grid{display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin-bottom:2.5rem}
+    .detail-cell{background:rgba(28,28,60,.45);border:1px solid rgba(199,120,200,.09);padding:.75rem 1rem}
+    .detail-key{font-family:'DM Mono',monospace;font-size:.59rem;color:rgba(199,120,200,.35);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.22rem}
+    .detail-val{font-size:.84rem;color:var(--blush);font-weight:500}
+    .detail-val:empty::before{content:'—';color:rgba(199,120,200,.2)}
+    .detail-val.mono{font-family:'DM Mono',monospace;font-size:.76rem;color:rgba(199,120,200,.38)}
+
+    /* SIMILAR — empty state only, filled from DB */
+    .similar-section{padding-top:2rem;border-top:1px solid rgba(199,120,200,.1)}
+    .similar-empty{text-align:center;padding:2rem 1rem}
+    .similar-empty-text{font-family:'DM Mono',monospace;font-size:.68rem;color:rgba(199,120,200,.2);letter-spacing:.06em;text-transform:uppercase}
+    .similar-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1.2rem;display:none}/* shown by JS */
+
+    /* ── RIGHT STICKY ── */
+    .product-right{position:sticky;top:80px;display:flex;flex-direction:column;gap:1.1rem;animation:fadeUp .6s ease .15s both}
+
+    /* PRICE CARD */
+    .price-card{background:var(--glass);border:1px solid var(--gb);backdrop-filter:blur(16px);padding:1.8rem}
+    .price-card-amount{font-family:'Playfair Display',serif;font-size:2.1rem;font-weight:900;color:var(--violet)}
+    .price-card-amount:empty::before{content:'₹ —';color:rgba(199,120,200,.2)}
+    .price-card-sub{font-family:'DM Mono',monospace;font-size:.62rem;color:rgba(199,120,200,.32);letter-spacing:.06em;margin-top:.25rem;margin-bottom:1.5rem;text-transform:uppercase}
+
+    .btn-contact{width:100%;padding:1rem;background:var(--purple);color:white;border:none;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .25s;letter-spacing:.02em;margin-bottom:.7rem;position:relative;overflow:hidden}
+    .btn-contact:hover{background:var(--purple-dark);box-shadow:0 8px 28px rgba(123,45,139,.42);transform:translateY(-1px)}
+    .btn-contact:disabled{opacity:.5;cursor:default;transform:none;box-shadow:none}
+    .btn-save{width:100%;padding:.85rem;background:transparent;border:1.5px solid rgba(199,120,200,.2);color:rgba(199,120,200,.65);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:500;cursor:pointer;transition:all .25s}
+    .btn-save:hover{background:rgba(199,120,200,.08);border-color:var(--violet);color:var(--violet)}
+    .btn-save.saved{color:var(--violet);border-color:var(--violet);background:rgba(199,120,200,.07)}
+
+    /* PHONE REVEAL */
+    .phone-reveal{overflow:hidden;max-height:0;opacity:0;transition:max-height .4s ease,opacity .35s ease;margin-top:.8rem}
+    .phone-reveal.show{max-height:220px;opacity:1}
+    .phone-reveal-inner{background:rgba(123,45,139,.1);border:1px solid rgba(199,120,200,.2);padding:1.2rem;text-align:center}
+    .phone-label{font-family:'DM Mono',monospace;font-size:.61rem;color:rgba(199,120,200,.45);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.5rem}
+    .phone-number{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;color:var(--blush);letter-spacing:.06em;margin-bottom:.65rem}
+    .phone-copy{display:inline-flex;align-items:center;gap:.4rem;font-family:'DM Mono',monospace;font-size:.62rem;color:rgba(199,120,200,.5);border:1px solid rgba(199,120,200,.16);padding:.28rem .8rem;cursor:pointer;transition:all .2s;letter-spacing:.05em;text-transform:uppercase}
+    .phone-copy:hover{color:var(--violet);border-color:var(--violet);background:rgba(199,120,200,.07)}
+    .phone-note{font-size:.72rem;color:rgba(237,232,238,.25);margin-top:.75rem;line-height:1.55;font-weight:300}
+
+    /* SELLER CARD */
+    .seller-card{background:var(--glass);border:1px solid var(--gb);backdrop-filter:blur(16px);padding:1.6rem}
+    .seller-card-label{font-family:'DM Mono',monospace;font-size:.62rem;color:rgba(199,120,200,.38);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1rem}
+    .seller-profile{display:flex;align-items:center;gap:.9rem;margin-bottom:1.1rem}
+    .seller-avatar{width:46px;height:46px;border-radius:50%;background:rgba(123,45,139,.35);border:2px solid rgba(199,120,200,.2);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:var(--blush);flex-shrink:0}
+    /* avatar initial set by JS from DB */
+    .seller-name{font-size:.92rem;font-weight:600;color:var(--blush)}
+    .seller-name:empty::before{content:'—';color:rgba(199,120,200,.2)}
+    .seller-verified{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--violet);letter-spacing:.05em;margin-top:.2rem}
+    .seller-verified::before{content:'✓ '}
+    .seller-rows{display:flex;flex-direction:column;gap:.5rem}
+    .seller-row{display:flex;align-items:center;gap:.6rem;font-size:.8rem;color:rgba(237,232,238,.4)}
+    .seller-row-icon{width:18px;text-align:center;font-size:.82rem;flex-shrink:0}
+    .seller-row-val{color:rgba(237,232,238,.65);font-weight:500}
+    .seller-row-val:empty::before{content:'—';color:rgba(199,120,200,.18)}
+
+    /* SAFETY */
+    .safety-card{background:rgba(123,45,139,.07);border:1px solid rgba(199,120,200,.1);padding:1.3rem 1.5rem}
+    .safety-title{font-family:'DM Mono',monospace;font-size:.62rem;color:rgba(199,120,200,.42);letter-spacing:.09em;text-transform:uppercase;margin-bottom:.85rem}
+    .safety-item{display:flex;align-items:flex-start;gap:.55rem;font-size:.77rem;color:rgba(237,232,238,.35);line-height:1.55;margin-bottom:.55rem;font-weight:300}
+    .safety-item:last-child{margin-bottom:0}
+    .safety-dot{width:4px;height:4px;background:var(--violet);border-radius:50%;margin-top:.48rem;flex-shrink:0;opacity:.5}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(22,22,48,.94);backdrop-filter:blur(16px);border:1px solid rgba(199,120,200,.18);color:var(--blush);padding:.8rem 1.5rem;font-size:.83rem;font-weight:500;display:flex;align-items:center;gap:.55rem;z-index:1000;white-space:nowrap;transition:transform .4s cubic-bezier(.34,1.56,.64,1)}
+    .toast.show{transform:translateX(-50%) translateY(0)}
+    .toast.success::before{content:'✓';color:var(--violet);font-weight:700}
+    .toast.error::before{content:'✕';color:#E08080;font-weight:700}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-icon">🎓</div>
+    Campus<span>Thrift</span>
+  </a>
+  <a href="index.html" class="nav-back">Back to Listings</a>
+</nav>
+
+<!-- BREADCRUMB — category & title filled from DB -->
+<div class="breadcrumb">
+  <a href="index.html">Home</a>
+  <span class="breadcrumb-sep">/</span>
+  <a href="index.html" id="bc-category">Category</a>
+  <span class="breadcrumb-sep">/</span>
+  <span class="breadcrumb-current" id="bc-title">Item</span>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LEFT -->
+  <div class="product-left">
+
+    <!-- IMAGE — src injected from Supabase Storage URL -->
+    <div class="image-main" id="image-main">
+      <img id="product-img" src="" alt="Product image"/>
+      <!-- shown when no image is uploaded -->
+      <div class="img-placeholder-icon" id="img-placeholder-icon">📷</div>
+      <div class="img-placeholder-text" id="img-placeholder-text">No image uploaded</div>
+    </div>
+
+    <!-- THUMBNAILS — rendered by JS if multiple images exist in DB -->
+    <div class="image-thumbs" id="thumbs-row"></div>
+
+    <!-- META -->
+    <div class="product-meta">
+      <div class="meta-tags">
+        <div class="tag tag-category" id="tag-category">Category</div>
+        <div class="tag tag-condition" id="tag-condition">Condition</div>
+        <div class="tag tag-verified">Verified Listing</div>
+      </div>
+
+      <div class="product-title" id="product-title"></div>
+      <div class="product-price" id="product-price"></div>
+
+      <div class="section-label">About this item</div>
+      <div class="product-description" id="product-description"></div>
+
+      <div class="section-label">Item details</div>
+      <div class="details-grid">
+        <div class="detail-cell">
+          <div class="detail-key">Category</div>
+          <div class="detail-val" id="detail-category"></div>
+        </div>
+        <div class="detail-cell">
+          <div class="detail-key">Condition</div>
+          <div class="detail-val" id="detail-condition"></div>
+        </div>
+        <div class="detail-cell">
+          <div class="detail-key">Listed on</div>
+          <div class="detail-val" id="detail-date"></div>
+        </div>
+        <div class="detail-cell">
+          <div class="detail-key">College</div>
+          <div class="detail-val" id="detail-college"></div>
+        </div>
+        <div class="detail-cell">
+          <div class="detail-key">Exchange</div>
+          <div class="detail-val">Meet on campus only</div>
+        </div>
+        <div class="detail-cell">
+          <div class="detail-key">Listing ID</div>
+          <div class="detail-val mono" id="detail-id"></div>
+        </div>
+      </div>
+
+      <!-- SIMILAR — populated by JS from Supabase query -->
+      <div class="similar-section">
+        <div class="section-label">More from this college</div>
+        <div class="similar-empty" id="similar-empty">
+          <div class="similar-empty-text">No similar listings right now</div>
+        </div>
+        <div class="similar-grid" id="similar-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT STICKY -->
+  <div class="product-right">
+
+    <!-- PRICE CARD -->
+    <div class="price-card">
+      <div class="price-card-amount" id="pc-price"></div>
+      <div class="price-card-sub">Campus price · Meet in person</div>
+
+      <button class="btn-contact" id="btn-contact" onclick="revealPhone()">
+        Show Seller's Number
+      </button>
+      <button class="btn-save" id="btn-save" onclick="toggleSave()">♡ &nbsp;Save Listing</button>
+
+      <!-- phone revealed here — number loaded from Supabase seller profile -->
+      <div class="phone-reveal" id="phone-reveal">
+        <div class="phone-reveal-inner">
+          <div class="phone-label">Seller's contact</div>
+          <div class="phone-number" id="phone-number">
+            <!-- loaded from profiles table on reveal -->
+          </div>
+          <div class="phone-copy" onclick="copyPhone()">⧉ &nbsp;Copy Number</div>
+          <div class="phone-note">
+            Pay only when you meet in person on campus. Never send money in advance.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SELLER CARD — all fields loaded from Supabase profiles table -->
+    <div class="seller-card">
+      <div class="seller-card-label">Listed by</div>
+      <div class="seller-profile">
+        <div class="seller-avatar" id="seller-avatar"></div>
+        <div>
+          <div class="seller-name" id="seller-name"></div>
+          <div class="seller-verified">Verified Student</div>
+        </div>
+      </div>
+      <div class="seller-rows">
+        <div class="seller-row">
+          <span class="seller-row-icon">🏛</span>
+          <span>Dept:</span>
+          <span class="seller-row-val" id="seller-dept"></span>
+        </div>
+        <div class="seller-row">
+          <span class="seller-row-icon">📅</span>
+          <span>Year:</span>
+          <span class="seller-row-val" id="seller-year"></span>
+        </div>
+        <div class="seller-row">
+          <span class="seller-row-icon">🎓</span>
+          <span>College:</span>
+          <span class="seller-row-val" id="seller-college"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SAFETY -->
+    <div class="safety-card">
+      <div class="safety-title">Stay Safe</div>
+      <div class="safety-item"><div class="safety-dot"></div>Meet only on campus grounds.</div>
+      <div class="safety-item"><div class="safety-dot"></div>Never pay in advance — pay when you receive the item.</div>
+      <div class="safety-item"><div class="safety-dot"></div>Inspect the item before paying.</div>
+      <div class="safety-item"><div class="safety-dot"></div>Report suspicious listings from the menu.</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  /*
+   * ─────────────────────────────────────────────
+   *  SUPABASE INTEGRATION POINTS
+   *  When backend is ready, replace the section
+   *  below with real Supabase fetches.
+   *
+   *  Tables needed:
+   *    listings  → id, title, price, category, condition,
+   *                description, image_urls[], created_at,
+   *                seller_id, college
+   *    profiles  → user_id, full_name, dept, year,
+   *                college, phone
+   *
+   *  Get listing ID from URL:
+   *    const listingId = new URLSearchParams(window.location.search).get('id');
+   *
+   *  Then fetch:
+   *    const { data: listing } = await supabase
+   *      .from('listings').select('*').eq('id', listingId).single();
+   *    const { data: seller } = await supabase
+   *      .from('profiles').select('*').eq('user_id', listing.seller_id).single();
+   *
+   *  Then call:
+   *    renderListing(listing);
+   *    renderSeller(seller);
+   * ─────────────────────────────────────────────
+   */
+
+  function renderListing(listing) {
+    // breadcrumb
+    document.getElementById('bc-category').textContent = listing.category || 'Browse';
+    document.getElementById('bc-title').textContent = listing.title || 'Item';
+
+    // image
+    if (listing.image_urls && listing.image_urls.length > 0) {
+      const img = document.getElementById('product-img');
+      img.src = listing.image_urls[0];
+      img.style.display = 'block';
+      document.getElementById('img-placeholder-icon').style.display = 'none';
+      document.getElementById('img-placeholder-text').style.display = 'none';
+      // thumbnails
+      if (listing.image_urls.length > 1) {
+        const thumbsRow = document.getElementById('thumbs-row');
+        listing.image_urls.forEach((url, i) => {
+          const t = document.createElement('div');
+          t.className = 'thumb' + (i === 0 ? ' active' : '');
+          t.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover"/>`;
+          t.onclick = () => {
+            document.getElementById('product-img').src = url;
+            document.querySelectorAll('.thumb').forEach(th => th.classList.remove('active'));
+            t.classList.add('active');
+          };
+          thumbsRow.appendChild(t);
+        });
+      }
+    }
+
+    // text fields
+    document.getElementById('tag-category').textContent   = listing.category  || 'Uncategorised';
+    document.getElementById('tag-condition').textContent  = listing.condition  || 'Unknown';
+    document.getElementById('product-title').textContent  = listing.title      || '';
+    document.getElementById('product-price').textContent  = listing.price ? '₹' + listing.price : '';
+    document.getElementById('pc-price').textContent       = listing.price ? '₹' + listing.price : '';
+    document.getElementById('product-description').textContent = listing.description || '';
+    document.getElementById('detail-category').textContent = listing.category  || '';
+    document.getElementById('detail-condition').textContent = listing.condition || '';
+    document.getElementById('detail-college').textContent   = listing.college   || '';
+    document.getElementById('detail-id').textContent        = listing.id ? '#CT-' + listing.id.slice(0,5).toUpperCase() : '';
+    document.getElementById('detail-date').textContent      = listing.created_at
+      ? new Date(listing.created_at).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'})
+      : '';
+  }
+
+  function renderSeller(seller) {
+    const name = seller.full_name || '';
+    document.getElementById('seller-name').textContent   = name;
+    document.getElementById('seller-avatar').textContent = name ? name[0].toUpperCase() : '?';
+    document.getElementById('seller-dept').textContent   = seller.dept    || '';
+    document.getElementById('seller-year').textContent   = seller.year    || '';
+    document.getElementById('seller-college').textContent = seller.college || '';
+  }
+
+  /* ── PHONE REVEAL ── */
+  let phoneRevealed = false;
+
+  async function revealPhone() {
+    if (phoneRevealed) return;
+    phoneRevealed = true;
+
+    const btn = document.getElementById('btn-contact');
+    btn.textContent = 'Number Revealed ✓';
+    btn.disabled = true;
+
+    /*
+     * Fetch seller phone from Supabase:
+     *   const { data } = await supabase
+     *     .from('profiles')
+     *     .select('phone')
+     *     .eq('user_id', currentSellerId)
+     *     .single();
+     *   document.getElementById('phone-number').textContent = data.phone || 'Not provided';
+     */
+
+    // Until Supabase is connected:
+    document.getElementById('phone-number').textContent = 'Connect Supabase to load';
+
+    document.getElementById('phone-reveal').classList.add('show');
+    showToast('Contact revealed. Meet on campus to exchange.', 'success');
+  }
+
+  function copyPhone() {
+    const num = document.getElementById('phone-number').textContent.trim();
+    navigator.clipboard.writeText(num)
+      .then(() => showToast('Number copied!', 'success'))
+      .catch(() => showToast('Copy failed — select manually', 'error'));
+  }
+
+  /* ── SAVE TOGGLE ── */
+  let saved = false;
+  function toggleSave() {
+    saved = !saved;
+    const btn = document.getElementById('btn-save');
+    btn.textContent = saved ? '♥  Saved' : '♡  Save Listing';
+    btn.classList.toggle('saved', saved);
+    showToast(saved ? 'Listing saved!' : 'Removed from saved', saved ? 'success' : 'error');
+    // TODO: upsert to Supabase saved_listings table
+  }
+
+  /* ── TOAST ── */
+  let _tt;
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type + ' show';
+    clearTimeout(_tt);
+    _tt = setTimeout(() => t.classList.remove('show'), 3000);
+  }
+</script>
+</body>
+</html>

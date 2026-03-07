@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const _supabase = supabase.createClient('https://ekdggxmhusdmqbscngjc.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrZGdneG1odXNkbXFic2NuZ2pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NjgwNDIsImV4cCI6MjA4ODQ0NDA0Mn0.l6fx7g-aFJzSaBhElVTXRqzrW64GPkyfGMBn7tkqSX4');
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Campus Thrift — Browse Listings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --navy:#161630;--purple:#7B2D8B;--violet:#C778C8;--blush:#EDE8EE;
+      --navy-mid:#1E1E42;--navy-light:#252552;--purple-dark:#5A1F68;
+      --glass:rgba(255,255,255,0.04);--gb:rgba(199,120,200,0.14);
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--blush);min-height:100vh;overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:999;opacity:.28}
+    .orb{position:fixed;border-radius:50%;filter:blur(120px);pointer-events:none;z-index:0}
+    .orb1{width:500px;height:500px;background:radial-gradient(circle,#7B2D8B,transparent 70%);top:-150px;left:-120px;opacity:.25}
+    .orb2{width:350px;height:350px;background:radial-gradient(circle,#C778C8,transparent 70%);bottom:-80px;right:-60px;opacity:.14}
+
+    /* NAV */
+    nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1rem 2.5rem;background:rgba(22,22,48,.9);border-bottom:1px solid rgba(199,120,200,.12);backdrop-filter:blur(20px)}
+    .nav-logo{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;color:var(--blush);text-decoration:none;display:flex;align-items:center;gap:.5rem;letter-spacing:-.02em}
+    .nav-logo-icon{width:30px;height:30px;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:.95rem}
+    .nav-logo span{color:var(--violet);font-style:italic}
+    .nav-search{flex:1;max-width:520px;margin:0 2rem;display:flex;align-items:center;background:rgba(22,22,48,.7);border:1.5px solid rgba(199,120,200,.14);transition:border-color .2s,box-shadow .2s}
+    .nav-search:focus-within{border-color:var(--violet);box-shadow:0 0 0 3px rgba(199,120,200,.08)}
+    .nav-search input{flex:1;background:transparent;border:none;outline:none;padding:.65rem 1rem;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--blush)}
+    .nav-search input::placeholder{color:rgba(199,120,200,.28)}
+    .nav-search-btn{padding:.65rem 1.1rem;background:var(--purple);border:none;color:white;cursor:pointer;font-size:.85rem;transition:background .2s;flex-shrink:0}
+    .nav-search-btn:hover{background:var(--purple-dark)}
+    .nav-right{display:flex;align-items:center;gap:.8rem}
+    .nav-link{font-size:.82rem;color:rgba(237,232,238,.4);text-decoration:none;transition:color .2s;font-weight:500}
+    .nav-link:hover{color:var(--violet)}
+    .btn-post{padding:.48rem 1.1rem;background:var(--purple);color:white;border:none;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;transition:all .2s}
+    .btn-post:hover{background:var(--purple-dark);transform:translateY(-1px)}
+
+    /* PAGE HEADER */
+    .page-header{position:relative;z-index:1;padding:1.8rem 2.5rem 0;animation:fadeUp .5s ease both}
+    .page-header-label{font-family:'DM Mono',monospace;font-size:.67rem;color:rgba(199,120,200,.45);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem}
+    .page-header-title{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:900;color:var(--blush);letter-spacing:-.02em}
+    .page-header-count{font-family:'DM Mono',monospace;font-size:.7rem;color:rgba(199,120,200,.38);letter-spacing:.06em;margin-top:.3rem}
+
+    /* BODY LAYOUT */
+    .body-wrap{position:relative;z-index:1;display:grid;grid-template-columns:240px 1fr;gap:0;padding:1.5rem 2.5rem 4rem;align-items:start}
+
+    /* ── SIDEBAR ── */
+    .sidebar{position:sticky;top:72px;padding-right:1.8rem;animation:fadeUp .5s ease .1s both}
+
+    .filter-block{margin-bottom:1.8rem;border-bottom:1px solid rgba(199,120,200,.08);padding-bottom:1.8rem}
+    .filter-block:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+    .filter-title{font-family:'DM Mono',monospace;font-size:.65rem;color:rgba(199,120,200,.5);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.9rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+    .filter-title-arrow{transition:transform .25s;font-size:.7rem;opacity:.5}
+    .filter-title-arrow.open{transform:rotate(180deg)}
+    .filter-body{overflow:hidden;transition:max-height .3s ease,opacity .25s ease;max-height:500px;opacity:1}
+    .filter-body.collapsed{max-height:0;opacity:0}
+
+    /* checkboxes */
+    .filter-option{display:flex;align-items:center;gap:.65rem;padding:.42rem 0;cursor:pointer;transition:color .2s}
+    .filter-option:hover .filter-label{color:var(--blush)}
+    .filter-checkbox{width:14px;height:14px;border:1.5px solid rgba(199,120,200,.25);background:rgba(22,22,48,.5);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;cursor:pointer}
+    .filter-checkbox.checked{background:var(--purple);border-color:var(--purple)}
+    .filter-checkbox.checked::after{content:'✓';color:white;font-size:.6rem;font-weight:700}
+    .filter-label{font-size:.83rem;color:rgba(237,232,238,.5);transition:color .2s;flex:1}
+    .filter-count{font-family:'DM Mono',monospace;font-size:.6rem;color:rgba(199,120,200,.28);letter-spacing:.03em}
+
+    /* price range */
+    .price-inputs{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.2rem}
+    .price-input{padding:.55rem .7rem;background:rgba(22,22,48,.55);border:1px solid rgba(199,120,200,.14);font-family:'DM Mono',monospace;font-size:.78rem;color:var(--blush);outline:none;width:100%;transition:border-color .2s}
+    .price-input::placeholder{color:rgba(199,120,200,.22)}
+    .price-input:focus{border-color:var(--violet)}
+    .price-apply{width:100%;margin-top:.6rem;padding:.55rem;background:var(--purple);color:white;border:none;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;transition:background .2s}
+    .price-apply:hover{background:var(--purple-dark)}
+
+    /* college pills in sidebar */
+    .college-filter-pills{display:flex;flex-direction:column;gap:.4rem}
+    .college-filter-pill{padding:.55rem .8rem;background:rgba(22,22,48,.4);border:1.5px solid rgba(199,120,200,.12);font-size:.82rem;color:rgba(237,232,238,.45);cursor:pointer;transition:all .22s;display:flex;align-items:center;justify-content:space-between}
+    .college-filter-pill:hover{background:rgba(123,45,139,.15);border-color:rgba(199,120,200,.28);color:var(--blush)}
+    .college-filter-pill.active{background:rgba(123,45,139,.25);border-color:var(--violet);color:var(--blush)}
+    .college-pill-label{font-weight:500}
+    .college-pill-city{font-family:'DM Mono',monospace;font-size:.6rem;color:rgba(199,120,200,.35);letter-spacing:.04em}
+
+    /* clear filters */
+    .clear-filters{width:100%;padding:.55rem;background:transparent;border:1px solid rgba(199,120,200,.16);color:rgba(199,120,200,.45);font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;transition:all .2s;margin-top:.5rem}
+    .clear-filters:hover{border-color:rgba(199,120,200,.35);color:var(--violet);background:rgba(199,120,200,.05)}
+
+    /* ── LISTINGS AREA ── */
+    .listings-area{animation:fadeUp .5s ease .15s both}
+
+    /* SORT BAR */
+    .sort-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid rgba(199,120,200,.08)}
+    .sort-left{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+    .active-filter-tag{display:inline-flex;align-items:center;gap:.4rem;background:rgba(123,45,139,.2);border:1px solid rgba(199,120,200,.22);padding:.25rem .65rem;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--violet);letter-spacing:.05em;cursor:pointer;transition:all .2s}
+    .active-filter-tag:hover{background:rgba(123,45,139,.32);border-color:rgba(199,120,200,.4)}
+    .active-filter-tag::after{content:'×';margin-left:.25rem;font-size:.75rem}
+    .sort-right{display:flex;align-items:center;gap:.8rem}
+    .sort-label{font-family:'DM Mono',monospace;font-size:.65rem;color:rgba(199,120,200,.38);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+    .sort-select{background:rgba(22,22,48,.6);border:1px solid rgba(199,120,200,.14);padding:.45rem .8rem;font-family:'DM Sans',sans-serif;font-size:.82rem;color:rgba(199,120,200,.65);outline:none;cursor:pointer;transition:border-color .2s;-webkit-appearance:none}
+    .sort-select:focus{border-color:var(--violet)}
+    .sort-select option{background:var(--navy-mid)}
+    .view-toggle{display:flex;gap:2px}
+    .view-btn{width:30px;height:30px;background:rgba(22,22,48,.5);border:1px solid rgba(199,120,200,.12);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.8rem;transition:all .2s;color:rgba(199,120,200,.35)}
+    .view-btn.active{background:rgba(123,45,139,.25);border-color:rgba(199,120,200,.3);color:var(--violet)}
+    .view-btn:hover:not(.active){background:rgba(199,120,200,.07);color:rgba(199,120,200,.6)}
+
+    /* GRID VIEW */
+    .listings-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem}
+    .listings-grid.two-col{grid-template-columns:repeat(2,1fr)}
+
+    .listing-card{background:rgba(28,28,60,.52);border:1px solid rgba(199,120,200,.1);cursor:pointer;transition:all .26s;position:relative;overflow:hidden;backdrop-filter:blur(8px)}
+    .listing-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(199,120,200,.05),transparent 60%);opacity:0;transition:opacity .25s;pointer-events:none}
+    .listing-card:hover{transform:translateY(-4px);box-shadow:0 14px 36px rgba(123,45,139,.2);border-color:rgba(199,120,200,.26)}
+    .listing-card:hover::after{opacity:1}
+
+    /* card image */
+    .card-img{height:180px;background:rgba(123,45,139,.12);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+    .card-img img{width:100%;height:100%;object-fit:cover;display:none}
+    .card-img-placeholder{font-size:2rem;opacity:.2;pointer-events:none}
+    .card-condition{position:absolute;top:.6rem;left:.6rem;font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.05em;text-transform:uppercase;padding:.2rem .52rem}
+    .cond-like-new{background:rgba(123,45,139,.45);color:var(--violet);border:1px solid rgba(199,120,200,.28)}
+    .cond-good{background:rgba(199,120,200,.18);color:var(--violet);border:1px solid rgba(199,120,200,.22)}
+    .cond-used{background:rgba(37,37,82,.6);color:rgba(199,120,200,.5);border:1px solid rgba(199,120,200,.12)}
+    .card-save{position:absolute;top:.6rem;right:.6rem;width:26px;height:26px;background:rgba(22,22,48,.75);border:1px solid rgba(199,120,200,.16);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;cursor:pointer;transition:all .2s;backdrop-filter:blur(8px)}
+    .card-save:hover,.card-save.saved{background:var(--purple);border-color:var(--purple)}
+
+    /* card body */
+    .card-body{padding:.85rem 1rem 1rem}
+    .card-category{font-family:'DM Mono',monospace;font-size:.58rem;color:rgba(199,120,200,.38);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.25rem}
+    .card-title{font-size:.88rem;font-weight:500;color:var(--blush);line-height:1.35;margin-bottom:.65rem}
+    .card-title:empty::before{content:'Loading…';color:rgba(199,120,200,.18);font-size:.78rem}
+
+    /* seller tag inside card */
+    .card-seller{display:flex;align-items:center;gap:.5rem;padding:.4rem .6rem;background:rgba(22,22,48,.45);border:1px solid rgba(199,120,200,.1);margin-bottom:.65rem}
+    .card-seller-avatar{width:20px;height:20px;border-radius:50%;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:white;flex-shrink:0}
+    .card-seller-name{font-size:.75rem;color:rgba(237,232,238,.55);font-weight:500;flex:1}
+    .card-seller-branch{font-family:'DM Mono',monospace;font-size:.58rem;color:rgba(199,120,200,.38);letter-spacing:.03em}
+    .card-seller-tick{font-size:.62rem;color:var(--violet)}
+
+    .card-bottom{display:flex;align-items:center;justify-content:space-between}
+    .card-price{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:var(--violet)}
+    .card-price:empty::before{content:'₹ —';color:rgba(199,120,200,.2)}
+    .card-college{font-family:'DM Mono',monospace;font-size:.6rem;color:rgba(199,120,200,.3);letter-spacing:.03em}
+
+    /* LIST VIEW */
+    .listings-list{display:flex;flex-direction:column;gap:.8rem;display:none}
+    .list-row{display:grid;grid-template-columns:100px 1fr auto;align-items:center;gap:1.2rem;padding:.9rem 1.1rem;background:rgba(28,28,60,.5);border:1px solid rgba(199,120,200,.1);cursor:pointer;transition:all .22s;backdrop-filter:blur(8px)}
+    .list-row:hover{background:rgba(123,45,139,.12);border-color:rgba(199,120,200,.24);transform:translateX(4px)}
+    .list-img{height:70px;background:rgba(123,45,139,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+    .list-img img{width:100%;height:100%;object-fit:cover;display:none}
+    .list-img-placeholder{font-size:1.5rem;opacity:.22}
+    .list-info .list-title{font-size:.9rem;font-weight:500;color:var(--blush);margin-bottom:.25rem}
+    .list-info .list-title:empty::before{content:'—';color:rgba(199,120,200,.18)}
+    .list-info .list-meta{font-family:'DM Mono',monospace;font-size:.62rem;color:rgba(199,120,200,.38);letter-spacing:.04em}
+    .list-right{text-align:right;flex-shrink:0}
+    .list-price{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;color:var(--violet)}
+    .list-price:empty::before{content:'₹ —';color:rgba(199,120,200,.2)}
+    .list-condition{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.05em;text-transform:uppercase;padding:.18rem .5rem;margin-top:.3rem;display:inline-block}
+
+    /* EMPTY STATE */
+    .empty-state{grid-column:1/-1;text-align:center;padding:5rem 2rem;display:none}
+    .empty-state.show{display:block}
+    .empty-icon{font-size:3rem;opacity:.2;margin-bottom:1rem}
+    .empty-title{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:rgba(237,232,238,.3);margin-bottom:.6rem}
+    .empty-text{font-family:'DM Mono',monospace;font-size:.68rem;color:rgba(199,120,200,.22);letter-spacing:.06em;text-transform:uppercase}
+
+    /* PAGINATION */
+    .pagination{display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid rgba(199,120,200,.08)}
+    .page-btn{width:34px;height:34px;background:rgba(22,22,48,.5);border:1px solid rgba(199,120,200,.12);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:.75rem;color:rgba(199,120,200,.4);cursor:pointer;transition:all .2s}
+    .page-btn:hover{background:rgba(123,45,139,.2);border-color:rgba(199,120,200,.3);color:var(--violet)}
+    .page-btn.active{background:var(--purple);border-color:var(--purple);color:white}
+    .page-btn.disabled{opacity:.25;cursor:default;pointer-events:none}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(22,22,48,.94);backdrop-filter:blur(16px);border:1px solid rgba(199,120,200,.18);color:var(--blush);padding:.8rem 1.5rem;font-size:.83rem;font-weight:500;display:flex;align-items:center;gap:.55rem;z-index:1000;white-space:nowrap;transition:transform .4s cubic-bezier(.34,1.56,.64,1)}
+    .toast.show{transform:translateX(-50%) translateY(0)}
+    .toast.success::before{content:'✓';color:var(--violet);font-weight:700}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-icon">🎓</div>
+    Campus<span>Thrift</span>
+  </a>
+  <div class="nav-search">
+    <input type="text" id="search-input" placeholder="Search listings on your campus…" oninput="handleSearch()"/>
+    <button class="nav-search-btn" onclick="handleSearch()">Search</button>
+  </div>
+  <div class="nav-right">
+    <a href="dashboard.html" class="nav-link">Dashboard</a>
+    <button class="btn-post" onclick="location.href='dashboard.html'">+ Post Listing</button>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-header-label">Campus Marketplace</div>
+  <div class="page-header-title">Browse Listings</div>
+  <!-- count updated by JS when data loads from Supabase -->
+  <div class="page-header-count" id="result-count">Connect Supabase to load listings</div>
+</div>
+
+<!-- BODY -->
+<div class="body-wrap">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+
+    <!-- COLLEGE -->
+    <div class="filter-block">
+      <div class="filter-title" onclick="toggleFilter('college')">
+        College
+        <span class="filter-title-arrow open" id="arrow-college">▾</span>
+      </div>
+      <div class="filter-body" id="body-college">
+        <div class="college-filter-pills">
+          <div class="college-filter-pill active" id="cpill-all" onclick="setCollegeFilter('all')">
+            <span class="college-pill-label">All Colleges</span>
+          </div>
+          <div class="college-filter-pill" id="cpill-skcet" onclick="setCollegeFilter('SKCET')">
+            <span class="college-pill-label">SKCET</span>
+            <span class="college-pill-city">Coimbatore</span>
+          </div>
+          <div class="college-filter-pill" id="cpill-sastra" onclick="setCollegeFilter('SASTRA')">
+            <span class="college-pill-label">SASTRA</span>
+            <span class="college-pill-city">Thanjavur</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CATEGORY -->
+    <div class="filter-block">
+      <div class="filter-title" onclick="toggleFilter('category')">
+        Category
+        <span class="filter-title-arrow open" id="arrow-category">▾</span>
+      </div>
+      <div class="filter-body" id="body-category">
+        <div class="filter-option" onclick="toggleCheck(this,'category','Textbooks')">
+          <div class="filter-checkbox"></div>
+          <span class="filter-label">Textbooks</span>
+        </div>
+        <div class="filter-option" onclick="toggleCheck(this,'category','Gadgets')">
+          <div class="filter-checkbox"></div>
+          <span class="filter-label">Gadgets & Electronics</span>
+        </div>
+        <div class="filter-option" onclick="toggleCheck(this,'category','Hostel')">
+          <div class="filter-checkbox"></div>
+          <span class="filter-label">Hostel Essentials</span>
+        </div>
+        <div class="filter-option" onclick="toggleCheck(this,'category','Lab')">
+          <div class="filter-checkbox"></div>
+          <span class="filter-label">Lab Equipment</span>
+        </div>
+        <div class="filter-option" onclick="toggleCheck(this,'category','Notes')">
+          <div class="filter-checkbox"></div>
+          <span class="filter-label">Notes & Stationery</span>
+        </div>
+        <div class="filter-option" onclick="toggleCheck(this,'category','Clothing')">
+          <div class="filter-checkbox"></div>
+          <span class="filter-label">Clothing & Uniform</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONDITION -->
+    <div class="filter-block">
+      <div class="filter-title" onclick="toggleFilter('condition')">
+        Condition
+        <span class="filter-title-arrow open" id="arrow-condition">▾</span>
+      </div>
+      <div class="filter-body" id="body-condition">
+        <div class="filter-option" onclick="toggleCheck(this,'condition','Like New')">
+          <div class="filter-checkbox"></div>
+          <span class="filter-label">Like New</span>
+        </div>
+        <div class="filter-option" onclick="toggleCheck(this,'condition','Good')">
+          <div class="filter-checkbox"></div>
+          <span class="filter-label">Good</span>
+        </div>
+        <div class="filter-option" onclick="toggleCheck(this,'condition','Used')">
+          <div class="filter-checkbox"></div>
+          <span class="filter-label">Used</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRICE RANGE -->
+    <div class="filter-block">
+      <div class="filter-title" onclick="toggleFilter('price')">
+        Price Range
+        <span class="filter-title-arrow open" id="arrow-price">▾</span>
+      </div>
+      <div class="filter-body" id="body-price">
+        <div class="price-inputs">
+          <input class="price-input" type="number" id="price-min" placeholder="₹ Min"/>
+          <input class="price-input" type="number" id="price-max" placeholder="₹ Max"/>
+        </div>
+        <button class="price-apply" onclick="applyPriceFilter()">Apply</button>
+      </div>
+    </div>
+
+    <button class="clear-filters" onclick="clearAllFilters()">✕ &nbsp;Clear All Filters</button>
+
+  </aside>
+
+  <!-- ── LISTINGS AREA ── -->
+  <div class="listings-area">
+
+    <!-- SORT BAR -->
+    <div class="sort-bar">
+      <div class="sort-left" id="active-tags">
+        <!-- active filter tags injected here by JS -->
+      </div>
+      <div class="sort-right">
+        <span class="sort-label">Sort</span>
+        <select class="sort-select" id="sort-select" onchange="applySort()">
+          <option value="newest">Newest First</option>
+          <option value="price-asc">Price: Low to High</option>
+          <option value="price-desc">Price: High to Low</option>
+        </select>
+        <div class="view-toggle">
+          <div class="view-btn active" id="btn-grid" onclick="setView('grid')" title="Grid view">⊞</div>
+          <div class="view-btn" id="btn-list" onclick="setView('list')" title="List view">☰</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRID VIEW — cards rendered by JS from Supabase -->
+    <div class="listings-grid" id="listings-grid">
+      <div class="empty-state show" id="empty-state">
+        <div class="empty-icon">📦</div>
+        <div class="empty-title">No listings yet</div>
+        <div class="empty-text">Connect Supabase to load real listings</div>
+      </div>
+    </div>
+
+    <!-- LIST VIEW -->
+    <div class="listings-list" id="listings-list"></div>
+
+    <!-- PAGINATION — rendered by JS based on total count -->
+    <div class="pagination" id="pagination" style="display:none">
+      <div class="page-btn disabled" id="pg-prev" onclick="changePage(-1)">‹</div>
+      <div class="page-btn active" id="pg-1" onclick="goPage(1)">1</div>
+      <div class="page-btn" id="pg-2" onclick="goPage(2)">2</div>
+      <div class="page-btn" id="pg-3" onclick="goPage(3)">3</div>
+      <div class="page-btn" id="pg-next" onclick="changePage(1)">›</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  /*
+   * ─────────────────────────────────────────────────────────
+   *  SUPABASE INTEGRATION — Browse / Listings page
+   *
+   *  1. Import Supabase client at top of this script:
+   *       import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+   *       const supabase = createClient(YOUR_URL, YOUR_ANON_KEY)
+   *
+   *  2. Call fetchListings() on page load with current filters.
+   *
+   *  3. fetchListings() builds a Supabase query like:
+   *       let query = supabase.from('listings')
+   *         .select('*, profiles(full_name, dept, year, college)')
+   *         .eq('status', 'active')
+   *       if (filters.college !== 'all') query = query.eq('college', filters.college)
+   *       if (filters.categories.length) query = query.in('category', filters.categories)
+   *       if (filters.conditions.length) query = query.in('condition', filters.conditions)
+   *       if (filters.priceMin) query = query.gte('price', filters.priceMin)
+   *       if (filters.priceMax) query = query.lte('price', filters.priceMax)
+   *       if (filters.search) query = query.ilike('title', `%${filters.search}%`)
+   *       // sort
+   *       if (sort === 'price-asc') query = query.order('price', {ascending: true})
+   *       if (sort === 'price-desc') query = query.order('price', {ascending: false})
+   *       if (sort === 'newest') query = query.order('created_at', {ascending: false})
+   *       // paginate
+   *       query = query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
+   *       const { data, count } = await query
+   *       renderCards(data)
+   *       updateCount(count)
+   *
+   *  4. renderCards(listings) → calls renderCard(listing) for each item.
+   *     renderCard builds a .listing-card and appends to #listings-grid.
+   *
+   *  5. renderListRows(listings) → same data, builds .list-row elements.
+   * ─────────────────────────────────────────────────────────
+   */
+
+  /* ── STATE ── */
+  const filters = { college: 'all', categories: [], conditions: [], priceMin: null, priceMax: null, search: '' };
+  let currentSort = 'newest';
+  let currentView = 'grid';
+  let currentPage = 0;
+  const PAGE_SIZE = 12;
+
+  /* ── FILTER COLLAPSE ── */
+  function toggleFilter(name) {
+    const body  = document.getElementById('body-' + name);
+    const arrow = document.getElementById('arrow-' + name);
+    const collapsed = body.classList.toggle('collapsed');
+    arrow.classList.toggle('open', !collapsed);
+  }
+
+  /* ── CHECKBOX FILTER ── */
+  function toggleCheck(el, group, value) {
+    const box = el.querySelector('.filter-checkbox');
+    const isChecked = box.classList.toggle('checked');
+    if (isChecked) {
+      if (group === 'category' && !filters.categories.includes(value)) filters.categories.push(value);
+      if (group === 'condition' && !filters.conditions.includes(value)) filters.conditions.push(value);
+    } else {
+      if (group === 'category') filters.categories = filters.categories.filter(v => v !== value);
+      if (group === 'condition') filters.conditions = filters.conditions.filter(v => v !== value);
+    }
+    updateActiveTags();
+    fetchListings();
+  }
+
+  /* ── COLLEGE FILTER ── */
+  function setCollegeFilter(college) {
+    filters.college = college;
+    ['all','skcet','sastra'].forEach(k => {
+      document.getElementById('cpill-' + k).classList.toggle('active', k === college.toLowerCase());
+    });
+    updateActiveTags();
+    fetchListings();
+  }
+
+  /* ── PRICE FILTER ── */
+  function applyPriceFilter() {
+    const min = document.getElementById('price-min').value;
+    const max = document.getElementById('price-max').value;
+    filters.priceMin = min ? Number(min) : null;
+    filters.priceMax = max ? Number(max) : null;
+    updateActiveTags();
+    fetchListings();
+  }
+
+  /* ── SEARCH ── */
+  function handleSearch() {
+    filters.search = document.getElementById('search-input').value.trim();
+    updateActiveTags();
+    fetchListings();
+  }
+
+  /* ── SORT ── */
+  function applySort() {
+    currentSort = document.getElementById('sort-select').value;
+    fetchListings();
+  }
+
+  /* ── VIEW TOGGLE ── */
+  function setView(view) {
+    currentView = view;
+    document.getElementById('btn-grid').classList.toggle('active', view === 'grid');
+    document.getElementById('btn-list').classList.toggle('active', view === 'list');
+    document.getElementById('listings-grid').style.display = view === 'grid' ? '' : 'none';
+    document.getElementById('listings-list').style.display = view === 'list' ? 'flex' : 'none';
+  }
+
+  /* ── ACTIVE FILTER TAGS ── */
+  function updateActiveTags() {
+    const container = document.getElementById('active-tags');
+    container.innerHTML = '';
+    const add = (label, onRemove) => {
+      const tag = document.createElement('div');
+      tag.className = 'active-filter-tag';
+      tag.textContent = label;
+      tag.onclick = onRemove;
+      container.appendChild(tag);
+    };
+    if (filters.college !== 'all') add(filters.college, () => setCollegeFilter('all'));
+    filters.categories.forEach(c => add(c, () => {
+      const opts = document.querySelectorAll('#body-category .filter-option');
+      opts.forEach(o => { if(o.textContent.trim().startsWith(c)) o.querySelector('.filter-checkbox').classList.remove('checked'); });
+      filters.categories = filters.categories.filter(v => v !== c);
+      updateActiveTags(); fetchListings();
+    }));
+    filters.conditions.forEach(c => add(c, () => {
+      const opts = document.querySelectorAll('#body-condition .filter-option');
+      opts.forEach(o => { if(o.textContent.trim() === c) o.querySelector('.filter-checkbox').classList.remove('checked'); });
+      filters.conditions = filters.conditions.filter(v => v !== c);
+      updateActiveTags(); fetchListings();
+    }));
+    if (filters.priceMin || filters.priceMax) {
+      const label = '₹' + (filters.priceMin || 0) + ' – ₹' + (filters.priceMax || '∞');
+      add(label, () => {
+        filters.priceMin = null; filters.priceMax = null;
+        document.getElementById('price-min').value = '';
+        document.getElementById('price-max').value = '';
+        updateActiveTags(); fetchListings();
+      });
+    }
+    if (filters.search) add('"' + filters.search + '"', () => {
+      filters.search = '';
+      document.getElementById('search-input').value = '';
+      updateActiveTags(); fetchListings();
+    });
+  }
+
+  /* ── CLEAR ALL ── */
+  function clearAllFilters() {
+    filters.college = 'all'; filters.categories = []; filters.conditions = [];
+    filters.priceMin = null; filters.priceMax = null; filters.search = '';
+    document.getElementById('search-input').value = '';
+    document.getElementById('price-min').value = '';
+    document.getElementById('price-max').value = '';
+    document.querySelectorAll('.filter-checkbox').forEach(b => b.classList.remove('checked'));
+    setCollegeFilter('all');
+    updateActiveTags();
+    fetchListings();
+  }
+
+  /* ── PAGINATION ── */
+  function changePage(dir) { goPage(currentPage + dir + 1); }
+  function goPage(p) {
+    currentPage = p - 1;
+    document.querySelectorAll('.page-btn[id^="pg-"]').forEach(b => b.classList.remove('active'));
+    const active = document.getElementById('pg-' + p);
+    if (active) active.classList.add('active');
+    document.getElementById('pg-prev').classList.toggle('disabled', currentPage === 0);
+    fetchListings();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* ── RENDER CARD (called with real listing object from Supabase) ── */
+  function renderCard(listing) {
+    const card = document.createElement('div');
+    card.className = 'listing-card';
+    card.onclick = () => location.href = 'product.html?id=' + listing.id;
+
+    const condClass = listing.condition === 'Like New' ? 'cond-like-new'
+                    : listing.condition === 'Good'     ? 'cond-good' : 'cond-used';
+
+    const sellerInitial = listing.profiles?.full_name ? listing.profiles.full_name[0].toUpperCase() : '?';
+    const sellerName    = listing.profiles?.full_name  || '—';
+    const sellerBranch  = [listing.profiles?.dept, listing.profiles?.year].filter(Boolean).join(' · ') || '—';
+
+    card.innerHTML = `
+      <div class="card-img">
+        ${listing.image_urls?.[0]
+          ? `<img src="${listing.image_urls[0]}" alt="${listing.title}" style="display:block"/>`
+          : `<div class="card-img-placeholder">📷</div>`}
+        <div class="card-condition ${condClass}">${listing.condition || ''}</div>
+        <div class="card-save" onclick="event.stopPropagation();saveItem(this,'${listing.id}')">♡</div>
+      </div>
+      <div class="card-body">
+        <div class="card-category">${listing.category || ''}</div>
+        <div class="card-title">${listing.title || ''}</div>
+        <div class="card-seller">
+          <div class="card-seller-avatar">${sellerInitial}</div>
+          <div>
+            <div class="card-seller-name">${sellerName}</div>
+            <div class="card-seller-branch">${sellerBranch}</div>
+          </div>
+          <div class="card-seller-tick">✓</div>
+        </div>
+        <div class="card-bottom">
+          <div class="card-price">${listing.price ? '₹' + listing.price : ''}</div>
+          <div class="card-college">${listing.college || ''}</div>
+        </div>
+      </div>`;
+    return card;
+  }
+
+  function renderListRow(listing) {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.onclick = () => location.href = 'product.html?id=' + listing.id;
+    const condClass = listing.condition === 'Like New' ? 'cond-like-new'
+                    : listing.condition === 'Good'     ? 'cond-good' : 'cond-used';
+    const sellerMeta = [listing.profiles?.full_name, listing.profiles?.dept, listing.profiles?.year, listing.college].filter(Boolean).join(' · ');
+    row.innerHTML = `
+      <div class="list-img">
+        ${listing.image_urls?.[0]
+          ? `<img src="${listing.image_urls[0]}" style="display:block;width:100%;height:100%;object-fit:cover"/>`
+          : `<div class="list-img-placeholder">📷</div>`}
+      </div>
+      <div class="list-info">
+        <div class="list-title">${listing.title || ''}</div>
+        <div class="list-meta">${sellerMeta}</div>
+      </div>
+      <div class="list-right">
+        <div class="list-price">${listing.price ? '₹' + listing.price : ''}</div>
+        <div class="list-condition ${condClass}">${listing.condition || ''}</div>
+      </div>`;
+    return row;
+  }
+
+  /* ── FETCH LISTINGS (stub — replace body with Supabase query) ── */
+  async function fetchListings() {
+    /*
+     * Replace this entire function body with the Supabase query
+     * described in the integration comment at the top.
+     * On success, call:
+     *   renderListings(data, count)
+     */
+    document.getElementById('empty-state').classList.add('show');
+    document.getElementById('result-count').textContent = 'Connect Supabase to load listings';
+  }
+
+  function renderListings(listings, totalCount) {
+    const grid = document.getElementById('listings-grid');
+    const list = document.getElementById('listings-list');
+    const empty = document.getElementById('empty-state');
+
+    grid.innerHTML = '';
+    list.innerHTML = '';
+
+    if (!listings || listings.length === 0) {
+      grid.appendChild(empty);
+      empty.classList.add('show');
+      document.getElementById('pagination').style.display = 'none';
+      document.getElementById('result-count').textContent = '0 listings found';
+      return;
+    }
+
+    empty.classList.remove('show');
+    listings.forEach(l => {
+      grid.appendChild(renderCard(l));
+      list.appendChild(renderListRow(l));
+    });
+
+    document.getElementById('result-count').textContent = totalCount + ' listing' + (totalCount !== 1 ? 's' : '') + ' found';
+
+    // show pagination if needed
+    const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+    document.getElementById('pagination').style.display = totalPages > 1 ? 'flex' : 'none';
+  }
+
+  function saveItem(btn, id) {
+    const saved = btn.classList.toggle('saved');
+    btn.textContent = saved ? '♥' : '♡';
+    showToast(saved ? 'Saved!' : 'Removed from saved', 'success');
+    // TODO: upsert to Supabase saved_listings table using id
+  }
+
+  let _tt;
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type + ' show';
+    clearTimeout(_tt);
+    _tt = setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // init
+  fetchListings();
+</script>
+</body>
+</html>

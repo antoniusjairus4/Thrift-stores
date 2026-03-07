@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const _supabase = supabase.createClient('https://ekdggxmhusdmqbscngjc.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrZGdneG1odXNkbXFic2NuZ2pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NjgwNDIsImV4cCI6MjA4ODQ0NDA0Mn0.l6fx7g-aFJzSaBhElVTXRqzrW64GPkyfGMBn7tkqSX4');
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Campus Thrift — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --navy:#161630;--purple:#7B2D8B;--violet:#C778C8;--blush:#EDE8EE;
+      --navy-mid:#1E1E42;--navy-light:#252552;--purple-dark:#5A1F68;
+      --glass:rgba(255,255,255,0.055);--gb:rgba(199,120,200,0.16);
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--blush);min-height:100vh;overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:999;opacity:.3}
+
+    /* ambient orbs */
+    .orb{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0}
+    .orb1{width:500px;height:500px;background:radial-gradient(circle,#7B2D8B,transparent 70%);top:-150px;left:-100px;opacity:.35}
+    .orb2{width:400px;height:400px;background:radial-gradient(circle,#C778C8,transparent 70%);bottom:-100px;right:-80px;opacity:.2}
+
+    /* NAV */
+    nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1rem 3rem;background:rgba(22,22,48,.88);border-bottom:1px solid rgba(199,120,200,.12);backdrop-filter:blur(20px)}
+    .nav-logo{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;color:var(--blush);text-decoration:none;display:flex;align-items:center;gap:.5rem;letter-spacing:-.02em}
+    .nav-logo-icon{width:30px;height:30px;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:.95rem}
+    .nav-logo span{color:var(--violet);font-style:italic}
+    .nav-right{display:flex;align-items:center;gap:1.2rem}
+    .nav-link{font-size:.83rem;color:rgba(237,232,238,.45);text-decoration:none;letter-spacing:.04em;text-transform:uppercase;font-weight:500;transition:color .2s}
+    .nav-link:hover{color:var(--violet)}
+    .nav-user{display:flex;align-items:center;gap:.7rem;padding:.45rem .9rem;background:rgba(199,120,200,.08);border:1px solid rgba(199,120,200,.18);cursor:pointer;transition:all .2s}
+    .nav-user:hover{background:rgba(199,120,200,.14);border-color:rgba(199,120,200,.3)}
+    .nav-avatar{width:30px;height:30px;border-radius:50%;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;color:white}
+    .nav-uname{font-size:.83rem;font-weight:500;color:var(--blush)}
+    .nav-ubranch{font-family:'DM Mono',monospace;font-size:.6rem;color:rgba(199,120,200,.5);letter-spacing:.04em}
+    .btn-post{padding:.5rem 1.2rem;background:var(--purple);color:white;border:none;font-family:'DM Sans',sans-serif;font-size:.83rem;font-weight:500;cursor:pointer;transition:all .2s;letter-spacing:.02em}
+    .btn-post:hover{background:var(--purple-dark);box-shadow:0 4px 16px rgba(123,45,139,.4);transform:translateY(-1px)}
+
+    /* MAIN WRAP */
+    .main{position:relative;z-index:1;padding:2.5rem 3rem;max-width:1280px;margin:0 auto}
+
+    /* GREETING */
+    .greeting{margin-bottom:2.5rem;animation:fadeUp .6s ease both}
+    .greeting-label{font-family:'DM Mono',monospace;font-size:.7rem;color:rgba(199,120,200,.55);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem}
+    .greeting-name{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:900;color:var(--blush);letter-spacing:-.02em;line-height:1.1}
+    .greeting-name span{color:var(--violet);font-style:italic}
+    .greeting-meta{font-family:'DM Mono',monospace;font-size:.72rem;color:rgba(199,120,200,.45);letter-spacing:.06em;margin-top:.4rem}
+
+    /* STAT CARDS ROW */
+    .stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem;margin-bottom:2.5rem}
+
+    .stat-card{background:var(--glass);border:1px solid var(--gb);backdrop-filter:blur(16px);padding:1.6rem 1.8rem;cursor:pointer;transition:all .28s;position:relative;overflow:hidden;animation:fadeUp .6s ease both}
+    .stat-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(199,120,200,.06) 0%,transparent 65%);opacity:0;transition:opacity .28s}
+    .stat-card:hover{border-color:rgba(199,120,200,.35);transform:translateY(-3px);box-shadow:0 12px 32px rgba(123,45,139,.2)}
+    .stat-card:hover::before{opacity:1}
+    .stat-card.active{border-color:var(--violet);background:rgba(199,120,200,.1);box-shadow:0 0 0 1px rgba(199,120,200,.2),0 12px 32px rgba(123,45,139,.25)}
+    .stat-card.active::before{opacity:1}
+    .stat-card:nth-child(1){animation-delay:.05s}
+    .stat-card:nth-child(2){animation-delay:.12s}
+    .stat-card:nth-child(3){animation-delay:.19s}
+    .stat-card:nth-child(4){animation-delay:.26s}
+
+    .sc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem}
+    .sc-icon{width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;background:rgba(123,45,139,.2);border:1px solid rgba(199,120,200,.2);transition:background .28s,border-color .28s}
+    .stat-card.active .sc-icon,.stat-card:hover .sc-icon{background:rgba(123,45,139,.35);border-color:rgba(199,120,200,.4)}
+    .sc-arrow{font-size:.75rem;color:rgba(199,120,200,.3);transition:color .2s,transform .2s}
+    .stat-card.active .sc-arrow,.stat-card:hover .sc-arrow{color:var(--violet);transform:translateY(2px)}
+    .sc-num{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;color:var(--blush);line-height:1;margin-bottom:.3rem}
+    .sc-label{font-family:'DM Mono',monospace;font-size:.67rem;color:rgba(199,120,200,.5);letter-spacing:.07em;text-transform:uppercase}
+    .sc-sub{font-size:.75rem;color:rgba(237,232,238,.3);margin-top:.5rem;font-weight:300}
+
+    /* active indicator bar */
+    .sc-bar{position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--violet);transform:scaleX(0);transform-origin:left;transition:transform .3s ease}
+    .stat-card.active .sc-bar{transform:scaleX(1)}
+
+    /* DETAIL PANEL */
+    .detail-panel{background:var(--glass);border:1px solid var(--gb);backdrop-filter:blur(16px);margin-bottom:2.5rem;overflow:hidden;transition:all .4s ease;animation:fadeUp .5s ease .3s both}
+    .detail-section{display:none;padding:2rem 2.2rem;animation:fadeUp .35s ease both}
+    .detail-section.active{display:block}
+
+    .detail-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.8rem;padding-bottom:1.2rem;border-bottom:1px solid rgba(199,120,200,.1)}
+    .detail-title{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;color:var(--blush);letter-spacing:-.01em}
+    .detail-actions{display:flex;gap:.7rem}
+    .btn-sm{padding:.42rem 1rem;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;transition:all .2s;border:none;letter-spacing:.02em}
+    .btn-sm-outline{background:transparent;border:1px solid rgba(199,120,200,.25);color:rgba(199,120,200,.7)}
+    .btn-sm-outline:hover{background:rgba(199,120,200,.08);border-color:var(--violet);color:var(--violet)}
+    .btn-sm-solid{background:var(--purple);color:white}
+    .btn-sm-solid:hover{background:var(--purple-dark)}
+
+    /* LISTINGS TABLE */
+    .listings-grid{display:flex;flex-direction:column;gap:.8rem}
+    .listing-row{display:grid;grid-template-columns:auto 1fr auto auto auto;align-items:center;gap:1.2rem;padding:1rem 1.2rem;background:rgba(22,22,48,.45);border:1px solid rgba(199,120,200,.1);transition:all .22s;cursor:pointer}
+    .listing-row:hover{background:rgba(123,45,139,.12);border-color:rgba(199,120,200,.24);transform:translateX(4px)}
+    .lr-img{width:48px;height:48px;background:rgba(123,45,139,.2);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+    .lr-info .lr-name{font-size:.9rem;font-weight:500;color:var(--blush);margin-bottom:.2rem}
+    .lr-info .lr-cat{font-family:'DM Mono',monospace;font-size:.62rem;color:rgba(199,120,200,.42);letter-spacing:.04em;text-transform:uppercase}
+    .lr-price{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:var(--violet);white-space:nowrap}
+    .lr-status{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;padding:.22rem .65rem;white-space:nowrap}
+    .status-active{background:rgba(123,45,139,.3);color:var(--violet);border:1px solid rgba(199,120,200,.25)}
+    .status-sold{background:rgba(90,180,90,.12);color:#8BCB8B;border:1px solid rgba(90,180,90,.2)}
+    .status-reserved{background:rgba(212,168,67,.1);color:#D4A843;border:1px solid rgba(212,168,67,.2)}
+    .lr-actions{display:flex;gap:.5rem}
+    .lr-btn{width:28px;height:28px;background:rgba(255,255,255,.05);border:1px solid rgba(199,120,200,.14);display:flex;align-items:center;justify-content:center;font-size:.78rem;cursor:pointer;transition:all .2s}
+    .lr-btn:hover{background:rgba(199,120,200,.12);border-color:rgba(199,120,200,.3)}
+    .lr-btn.del:hover{background:rgba(200,70,70,.15);border-color:rgba(200,70,70,.3)}
+
+    /* PURCHASES */
+    .purchases-grid{display:flex;flex-direction:column;gap:.8rem}
+    .purchase-row{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:1.2rem;padding:1rem 1.2rem;background:rgba(22,22,48,.45);border:1px solid rgba(199,120,200,.1);transition:all .22s}
+    .purchase-row:hover{background:rgba(123,45,139,.1);border-color:rgba(199,120,200,.22)}
+    .pr-img{width:48px;height:48px;background:rgba(123,45,139,.2);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+    .pr-info .pr-name{font-size:.9rem;font-weight:500;color:var(--blush);margin-bottom:.2rem}
+    .pr-info .pr-seller{font-family:'DM Mono',monospace;font-size:.62rem;color:rgba(199,120,200,.42);letter-spacing:.04em}
+    .pr-price{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:var(--violet);white-space:nowrap}
+    .pr-date{font-family:'DM Mono',monospace;font-size:.62rem;color:rgba(237,232,238,.28);letter-spacing:.04em;white-space:nowrap;text-align:right}
+
+    /* PROFILE */
+    .profile-grid{display:grid;grid-template-columns:auto 1fr;gap:2.5rem;align-items:start}
+    .profile-avatar-wrap{display:flex;flex-direction:column;align-items:center;gap:1rem}
+    .profile-avatar{width:90px;height:90px;border-radius:50%;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:2.2rem;font-weight:700;color:white;border:3px solid rgba(199,120,200,.3);position:relative}
+    .profile-verified{position:absolute;bottom:2px;right:2px;width:22px;height:22px;background:var(--navy-mid);border:2px solid rgba(199,120,200,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem}
+    .profile-change{font-family:'DM Mono',monospace;font-size:.62rem;color:rgba(199,120,200,.45);cursor:pointer;letter-spacing:.04em;transition:color .2s;text-align:center}
+    .profile-change:hover{color:var(--violet)}
+    .profile-fields{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    .pf-group{display:flex;flex-direction:column;gap:.35rem}
+    .pf-group.full{grid-column:span 2}
+    .pf-label{font-family:'DM Mono',monospace;font-size:.63rem;color:rgba(199,120,200,.42);letter-spacing:.08em;text-transform:uppercase}
+    .pf-input{padding:.75rem 1rem;background:rgba(22,22,48,.55);border:1px solid rgba(199,120,200,.14);font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--blush);outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none}
+    .pf-input:focus{border-color:var(--violet);box-shadow:0 0 0 3px rgba(199,120,200,.1)}
+    .pf-select{padding:.75rem 1rem;background:rgba(22,22,48,.55);border:1px solid rgba(199,120,200,.14);font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--blush);outline:none;cursor:pointer;transition:border-color .2s;-webkit-appearance:none}
+    .pf-select:focus{border-color:var(--violet)}
+    .pf-select option{background:var(--navy-mid)}
+    .profile-save{margin-top:1.2rem;padding:.75rem 2rem;background:var(--purple);color:white;border:none;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:500;cursor:pointer;transition:all .2s;grid-column:span 2}
+    .profile-save:hover{background:var(--purple-dark);box-shadow:0 6px 20px rgba(123,45,139,.38);transform:translateY(-1px)}
+
+    /* STATS SECTION */
+    .stats-deep-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin-bottom:1.8rem}
+    .sd-card{background:rgba(22,22,48,.5);border:1px solid rgba(199,120,200,.12);padding:1.4rem 1.6rem;transition:all .22s}
+    .sd-card:hover{border-color:rgba(199,120,200,.28);background:rgba(123,45,139,.1)}
+    .sd-num{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;color:var(--violet);margin-bottom:.3rem}
+    .sd-label{font-family:'DM Mono',monospace;font-size:.65rem;color:rgba(199,120,200,.48);letter-spacing:.07em;text-transform:uppercase}
+    .sd-desc{font-size:.78rem;color:rgba(237,232,238,.3);margin-top:.4rem;font-weight:300}
+
+    /* mini chart bars */
+    .activity-chart{margin-top:1rem}
+    .chart-label{font-family:'DM Mono',monospace;font-size:.65rem;color:rgba(199,120,200,.45);letter-spacing:.07em;text-transform:uppercase;margin-bottom:.8rem}
+    .chart-bars{display:flex;align-items:flex-end;gap:.5rem;height:80px}
+    .chart-bar-wrap{display:flex;flex-direction:column;align-items:center;gap:.4rem;flex:1}
+    .chart-bar{width:100%;background:rgba(123,45,139,.25);border:1px solid rgba(199,120,200,.15);transition:background .2s;cursor:pointer;border-radius:0}
+    .chart-bar:hover{background:rgba(199,120,200,.3)}
+    .chart-bar.highlight{background:var(--purple);border-color:rgba(199,120,200,.4)}
+    .chart-month{font-family:'DM Mono',monospace;font-size:.58rem;color:rgba(199,120,200,.35);letter-spacing:.04em}
+
+    /* empty state */
+    .empty-state{text-align:center;padding:3rem 1rem}
+    .empty-icon{font-size:2.8rem;margin-bottom:1rem;opacity:.45}
+    .empty-title{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:rgba(237,232,238,.5);margin-bottom:.6rem}
+    .empty-text{font-size:.83rem;color:rgba(199,120,200,.38);line-height:1.7;max-width:360px;margin:0 auto 1.4rem;font-weight:300}
+    .empty-btn{display:inline-block;padding:.65rem 1.6rem;background:var(--purple);color:white;border:none;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;transition:all .2s;text-decoration:none}
+    .empty-btn:hover{background:var(--purple-dark);box-shadow:0 4px 16px rgba(123,45,139,.38);transform:translateY(-1px)}
+
+    /* toast */
+    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(22,22,48,.94);backdrop-filter:blur(16px);border:1px solid rgba(199,120,200,.18);color:var(--blush);padding:.8rem 1.5rem;font-size:.83rem;font-weight:500;display:flex;align-items:center;gap:.58rem;z-index:1000;white-space:nowrap;transition:transform .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 8px 32px rgba(0,0,0,.38)}
+    .toast.show{transform:translateX(-50%) translateY(0)}
+    .toast.success::before{content:'✓';color:var(--violet);font-weight:700}
+    .toast.error::before{content:'✕';color:#E08080;font-weight:700}
+
+    /* modal */
+    .modal-overlay{position:fixed;inset:0;background:rgba(16,16,32,.75);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center}
+    .modal-overlay.show{display:flex}
+    .modal{background:var(--navy-mid);border:1px solid rgba(199,120,200,.22);padding:2rem;width:100%;max-width:440px;animation:fadeUp .3s ease both}
+    .modal-title{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--blush);margin-bottom:.4rem}
+    .modal-sub{font-size:.82rem;color:rgba(237,232,238,.38);margin-bottom:1.5rem;font-weight:300}
+    .modal-input-group{margin-bottom:1rem}
+    .modal-label{font-family:'DM Mono',monospace;font-size:.63rem;color:rgba(199,120,200,.42);letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:.35rem}
+    .modal-input,.modal-select,.modal-textarea{width:100%;padding:.75rem 1rem;background:rgba(22,22,48,.65);border:1px solid rgba(199,120,200,.14);font-family:'DM Sans',sans-serif;font-size:.87rem;color:var(--blush);outline:none;transition:border-color .2s;-webkit-appearance:none}
+    .modal-textarea{resize:vertical;min-height:80px}
+    .modal-input:focus,.modal-select:focus,.modal-textarea:focus{border-color:var(--violet);box-shadow:0 0 0 3px rgba(199,120,200,.1)}
+    .modal-input::placeholder,.modal-textarea::placeholder{color:rgba(237,232,238,.2)}
+    .modal-select option{background:var(--navy-mid)}
+    .modal-row{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+    .modal-actions{display:flex;gap:.7rem;margin-top:1.5rem;justify-content:flex-end}
+    .btn-cancel{padding:.65rem 1.4rem;background:transparent;border:1px solid rgba(199,120,200,.2);color:rgba(199,120,200,.6);font-family:'DM Sans',sans-serif;font-size:.85rem;cursor:pointer;transition:all .2s}
+    .btn-cancel:hover{border-color:rgba(199,120,200,.38);color:var(--violet)}
+    .btn-confirm{padding:.65rem 1.6rem;background:var(--purple);color:white;border:none;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;transition:all .2s}
+    .btn-confirm:hover{background:var(--purple-dark);box-shadow:0 4px 16px rgba(123,45,139,.38)}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-icon">🎓</div>
+    Campus<span>Thrift</span>
+  </a>
+  <div class="nav-right">
+    <a href="index.html" class="nav-link">Browse</a>
+    <button class="btn-post" onclick="openModal()">+ Post a Listing</button>
+    <div class="nav-user">
+      <div class="nav-avatar" id="nav-avatar">?</div>
+      <div>
+        <div class="nav-uname" id="nav-uname">My Account</div>
+        <div class="nav-ubranch" id="nav-ubranch">Complete your profile</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="main">
+
+  <!-- GREETING -->
+  <div class="greeting">
+    <div class="greeting-label">Your Dashboard</div>
+    <div class="greeting-name">Hey, <span id="display-name">Student.</span> 👋</div>
+    <div class="greeting-meta" id="display-meta">Complete your profile to show your college & branch here · ✓ Verified Student</div>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="stat-cards">
+
+    <div class="stat-card active" id="card-listings" onclick="openSection('listings')">
+      <div class="sc-top"><div class="sc-icon">📦</div><div class="sc-arrow">▼</div></div>
+      <div class="sc-num">0</div>
+      <div class="sc-label">My Listings</div>
+      <div class="sc-sub">Nothing posted yet</div>
+      <div class="sc-bar"></div>
+    </div>
+
+    <div class="stat-card" id="card-purchases" onclick="openSection('purchases')">
+      <div class="sc-top"><div class="sc-icon">🛍️</div><div class="sc-arrow">▼</div></div>
+      <div class="sc-num">0</div>
+      <div class="sc-label">Purchases</div>
+      <div class="sc-sub">Nothing bought yet</div>
+      <div class="sc-bar"></div>
+    </div>
+
+    <div class="stat-card" id="card-stats" onclick="openSection('stats')">
+      <div class="sc-top"><div class="sc-icon">📊</div><div class="sc-arrow">▼</div></div>
+      <div class="sc-num">₹0</div>
+      <div class="sc-label">Total Earned</div>
+      <div class="sc-sub">Start selling to track this</div>
+      <div class="sc-bar"></div>
+    </div>
+
+    <div class="stat-card" id="card-profile" onclick="openSection('profile')">
+      <div class="sc-top"><div class="sc-icon">🎓</div><div class="sc-arrow">▼</div></div>
+      <div class="sc-num">—</div>
+      <div class="sc-label">Profile</div>
+      <div class="sc-sub">Fill in your details</div>
+      <div class="sc-bar"></div>
+    </div>
+
+  </div>
+
+  <!-- DETAIL PANEL -->
+  <div class="detail-panel">
+
+    <!-- MY LISTINGS -->
+    <div class="detail-section active" id="section-listings">
+      <div class="detail-header">
+        <div class="detail-title">My Listings</div>
+        <div class="detail-actions">
+          <button class="btn-sm btn-sm-solid" onclick="openModal()">+ New Listing</button>
+        </div>
+      </div>
+      <div class="empty-state">
+        <div class="empty-icon">📦</div>
+        <div class="empty-title">No listings yet</div>
+        <div class="empty-text">Post your first item — textbook, gadget, hostel stuff — and your batchmates can find it here.</div>
+        <button class="empty-btn" onclick="openModal()">Post your first listing →</button>
+      </div>
+      <!-- When connected to Supabase, listings will render here dynamically -->
+      <div class="listings-grid" id="listings-grid" style="display:none"></div>
+    </div>
+
+    <!-- MY PURCHASES -->
+    <div class="detail-section" id="section-purchases">
+      <div class="detail-header">
+        <div class="detail-title">My Purchases</div>
+      </div>
+      <div class="empty-state">
+        <div class="empty-icon">🛍️</div>
+        <div class="empty-title">No purchases yet</div>
+        <div class="empty-text">When you buy something from a fellow student, it'll show up here with the seller's details and date.</div>
+        <a href="index.html" class="empty-btn">Browse listings →</a>
+      </div>
+      <!-- Populated from Supabase orders table on connect -->
+      <div class="purchases-grid" id="purchases-grid" style="display:none"></div>
+    </div>
+
+    <!-- STATS -->
+    <div class="detail-section" id="section-stats">
+      <div class="detail-header">
+        <div class="detail-title">Your Activity</div>
+      </div>
+      <div class="stats-deep-grid">
+        <div class="sd-card"><div class="sd-num">₹0</div><div class="sd-label">Total Earned</div><div class="sd-desc">Will update when you complete a sale</div></div>
+        <div class="sd-card"><div class="sd-num">₹0</div><div class="sd-label">Total Saved</div><div class="sd-desc">Tracks savings vs buying new</div></div>
+        <div class="sd-card"><div class="sd-num">0</div><div class="sd-label">Items Listed</div><div class="sd-desc">Post your first item to get started</div></div>
+        <div class="sd-card"><div class="sd-num">0</div><div class="sd-label">Items Bought</div><div class="sd-desc">Browse and buy from your campus</div></div>
+        <div class="sd-card"><div class="sd-num">—</div><div class="sd-label">Sell Rate</div><div class="sd-desc">Calculated after your first listing</div></div>
+        <div class="sd-card"><div class="sd-num">—</div><div class="sd-label">Avg. Time to Sell</div><div class="sd-desc">Tracked once you make a sale</div></div>
+      </div>
+      <div class="empty-state" style="padding:2rem 1rem">
+        <div class="empty-icon">📊</div>
+        <div class="empty-title">No activity yet</div>
+        <div class="empty-text">Your stats and activity chart will appear here once you start listing or buying on Campus Thrift.</div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="detail-section" id="section-profile">
+      <div class="detail-header">
+        <div class="detail-title">My Profile</div>
+        <div class="detail-actions">
+          <button class="btn-sm btn-sm-outline" onclick="showToast('Profile saved!','success')">Save Changes</button>
+        </div>
+      </div>
+      <div class="profile-grid">
+        <div class="profile-avatar-wrap">
+          <div class="profile-avatar">?<div class="profile-verified">✓</div></div>
+          <div class="profile-change" onclick="showToast('Photo upload coming soon','success')">Add photo</div>
+          <div style="font-family:'DM Mono',monospace;font-size:.6rem;color:rgba(199,120,200,.35);letter-spacing:.04em;margin-top:.3rem;text-align:center">✓ Verified Student</div>
+        </div>
+        <div>
+          <div class="profile-fields">
+            <div class="pf-group">
+              <div class="pf-label">First Name</div>
+              <input class="pf-input" type="text" id="prof-fname" placeholder="Your first name"/>
+            </div>
+            <div class="pf-group">
+              <div class="pf-label">Last Name</div>
+              <input class="pf-input" type="text" id="prof-lname" placeholder="Your last name"/>
+            </div>
+            <div class="pf-group full">
+              <div class="pf-label">College Email</div>
+              <input class="pf-input" type="email" id="prof-email" placeholder="Loaded from your account" disabled style="opacity:.5;cursor:not-allowed"/>
+            </div>
+            <div class="pf-group">
+              <div class="pf-label">College / University</div>
+              <input class="pf-input" type="text" id="prof-college" placeholder="e.g. Sri Krishna College of Engg."/>
+            </div>
+            <div class="pf-group">
+              <div class="pf-label">Department</div>
+              <select class="pf-select" id="prof-dept">
+                <option value="" disabled selected>Select dept.</option>
+                <option>CSE</option><option>ECE</option><option>EEE</option><option>IT</option><option>MECH</option><option>CIVIL</option><option>AIDS</option><option>Other</option>
+              </select>
+            </div>
+            <div class="pf-group">
+              <div class="pf-label">Year</div>
+              <select class="pf-select" id="prof-year">
+                <option value="" disabled selected>Select year</option>
+                <option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option>
+              </select>
+            </div>
+            <div class="pf-group">
+              <div class="pf-label">Phone (optional)</div>
+              <input class="pf-input" type="tel" id="prof-phone" placeholder="+91 98765 43210"/>
+            </div>
+            <div class="pf-group full" style="margin-top:.4rem">
+              <button class="profile-save" onclick="saveProfile()">Save Changes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!-- END DETAIL PANEL -->
+
+</div>
+<!-- END MAIN -->
+
+<!-- POST LISTING MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-title">Post a Listing</div>
+    <div class="modal-sub">Fill in the details. Your college & branch will be added automatically.</div>
+    <div class="modal-input-group">
+      <label class="modal-label">Item Title</label>
+      <input class="modal-input" type="text" placeholder="e.g. Engineering Maths Vol. 2"/>
+    </div>
+    <div class="modal-row">
+      <div class="modal-input-group">
+        <label class="modal-label">Category</label>
+        <select class="modal-select">
+          <option>Textbooks</option><option>Gadgets</option><option>Hostel Stuff</option><option>Lab Equipment</option><option>Notes & Stationery</option><option>Clothing & Uniform</option>
+        </select>
+      </div>
+      <div class="modal-input-group">
+        <label class="modal-label">Condition</label>
+        <select class="modal-select">
+          <option>Like New</option><option>Good</option><option>Used</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-input-group">
+      <label class="modal-label">Price (₹)</label>
+      <input class="modal-input" type="number" placeholder="e.g. 250"/>
+    </div>
+    <div class="modal-input-group">
+      <label class="modal-label">Description</label>
+      <textarea class="modal-textarea" placeholder="Briefly describe the item — edition, age, any defects…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-confirm" onclick="postListing()">Post Listing →</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  function openSection(name) {
+    document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
+    document.getElementById('card-' + name).classList.add('active');
+    document.querySelectorAll('.detail-section').forEach(s => s.classList.remove('active'));
+    document.getElementById('section-' + name).classList.add('active');
+    document.querySelector('.detail-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function openModal() {
+    document.getElementById('modal-overlay').classList.add('show');
+  }
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('show');
+  }
+  function closeModalOutside(e) {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+  }
+  function postListing() {
+    closeModal();
+    showToast('Listing posted! Will appear once connected to backend.', 'success');
+  }
+
+  function saveProfile() {
+    const fname = document.getElementById('prof-fname').value.trim();
+    const lname = document.getElementById('prof-lname').value.trim();
+    const dept  = document.getElementById('prof-dept').value;
+    const year  = document.getElementById('prof-year').value;
+    const college = document.getElementById('prof-college').value.trim();
+
+    if (!fname) { showToast('Please enter your first name.', 'error'); return; }
+
+    // Update nav
+    const initials = (fname[0] + (lname[0] || '')).toUpperCase();
+    document.getElementById('nav-avatar').textContent = initials;
+    document.getElementById('nav-uname').textContent = fname + (lname ? ' ' + lname : '');
+    const metaParts = [dept, year, college].filter(Boolean);
+    document.getElementById('nav-ubranch').textContent = metaParts.join(' · ') || 'Complete your profile';
+
+    // Update greeting
+    document.getElementById('display-name').textContent = fname + '.';
+    document.getElementById('display-meta').textContent =
+      metaParts.join(' · ') + ' · ✓ Verified Student';
+
+    // Update profile avatar letter
+    document.querySelector('.profile-avatar').childNodes[0].textContent = initials;
+
+    showToast('Profile saved!', 'success');
+  }
+
+  let tt;
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type + ' show';
+    clearTimeout(tt);
+    tt = setTimeout(() => t.classList.remove('show'), 3200);
+  }
+</script>
+</body>
+</html>
