@@ -224,7 +224,7 @@
         <span class="filter-title-arrow open" id="arrow-college">▾</span>
       </div>
       <div class="filter-body" id="body-college">
-        <div class="college-filter-pills">
+        <div class="college-filter-pills" id="college-pills">
           <div class="college-filter-pill active" id="cpill-all" onclick="setCollegeFilter('all')">
             <span class="college-pill-label">All Colleges</span>
           </div>
@@ -236,6 +236,9 @@
             <span class="college-pill-label">SASTRA</span>
             <span class="college-pill-city">Thanjavur</span>
           </div>
+        </div>
+        <div id="college-note" style="font-family:'DM Mono',monospace;font-size:.62rem;color:rgba(199,120,200,.35);letter-spacing:.04em;margin-top:.6rem;display:none">
+          Showing your campus only
         </div>
       </div>
     </div>
@@ -437,6 +440,9 @@
     ['all','skcet','sastra'].forEach(k => {
       document.getElementById('cpill-' + k).classList.toggle('active', k === college.toLowerCase());
     });
+    // Show "your campus only" note when a specific college is auto-selected
+    const note = document.getElementById('college-note');
+    if (note) note.style.display = college !== 'all' ? 'block' : 'none';
     updateActiveTags();
     fetchListings();
   }
@@ -685,8 +691,20 @@
     _tt = setTimeout(() => t.classList.remove('show'), 2800);
   }
 
-  // init
-  fetchListings();
+  // init — auto filter by user's college
+  async function init() {
+    const { data: { user } } = await _supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await _supabase
+        .from('profiles').select('college').eq('id', user.id).single();
+      if (profile?.college) {
+        setCollegeFilter(profile.college);
+        return; // setCollegeFilter calls fetchListings
+      }
+    }
+    fetchListings();
+  }
+  init();
 </script>
 </body>
 </html>
