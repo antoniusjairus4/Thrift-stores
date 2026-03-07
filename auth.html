@@ -278,21 +278,12 @@
         <div class="switch-text">Already have an account? <a onclick="switchTab('login')">Log in →</a></div>
       </div>
 
-      <!-- OTP VERIFICATION STEP -->
+      <!-- EMAIL CONFIRMATION STEP -->
       <div class="verify-step" id="verify-step">
         <div class="verify-icon">📬</div>
-        <div class="verify-title">Check your inbox</div>
-        <p class="verify-sub">We sent a 6-digit code to<br/><strong id="verify-email-display"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="9ce5f3e9eef2fdf1f9dceff7fff9e8b2fdffb2f5f2">[email&#160;protected]</a></strong></p>
-        <div class="otp-row">
-          <input class="otp-input" type="text" maxlength="1" oninput="otpMove(this,0)"/>
-          <input class="otp-input" type="text" maxlength="1" oninput="otpMove(this,1)"/>
-          <input class="otp-input" type="text" maxlength="1" oninput="otpMove(this,2)"/>
-          <input class="otp-input" type="text" maxlength="1" oninput="otpMove(this,3)"/>
-          <input class="otp-input" type="text" maxlength="1" oninput="otpMove(this,4)"/>
-          <input class="otp-input" type="text" maxlength="1" oninput="otpMove(this,5)"/>
-        </div>
-        <a class="resend-link" onclick="showToast('Code resent!','success')">Resend code</a>
-        <button class="btn-submit" id="btn-verify" onclick="handleVerify()"><span class="btn-text">Verify & Continue</span><div class="btn-loader"><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div></div></button>
+        <div class="verify-title">Confirm your email</div>
+        <p class="verify-sub">We sent a confirmation link to<br/><strong id="verify-email-display">your email</strong><br/><br/>Click the link in the email to verify your account and get started.</p>
+        <a class="resend-link" onclick="resendConfirmation()">Resend email</a>
       </div>
 
       <!-- SUCCESS -->
@@ -416,27 +407,22 @@
     showToast('Verification code sent to your college email!','success');
   }
 
-  function otpMove(input,idx){
-    if(input.value.length===1&&idx<5) otpInputs[idx+1].focus();
-    const allFilled=[...otpInputs].every(i=>i.value.length===1);
-    if(allFilled) setTimeout(handleVerify,300);
+  async function resendConfirmation() {
+    const email = document.getElementById('verify-email-display').textContent;
+    const { error } = await _supabase.auth.resend({ type: 'signup', email });
+    if (error) { showToast(error.message, 'error'); return; }
+    showToast('Confirmation email resent!', 'success');
   }
 
-  async function handleVerify(){
-    const token = [...otpInputs].map(i=>i.value).join('');
-    if(token.length < 6){ showToast('Enter the full 6-digit code','error'); return; }
-    setLoading('btn-verify',true);
-    const email = document.getElementById('verify-email-display').textContent;
-    const { error } = await _supabase.auth.verifyOtp({ email, token, type: 'signup' });
-    setLoading('btn-verify',false);
-    if(error){
-      showToast(error.message,'error');
-      return;
+  // Handle email confirmation redirect
+  // When user clicks the link in email, Supabase redirects back here with a token
+  async function handleAuthRedirect() {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (session) {
+      window.location.href = 'dashboard.html';
     }
-    document.getElementById('verify-step').classList.remove('show');
-    document.getElementById('success-state').classList.add('show');
-    showToast('Email verified! Welcome to Campus Thrift 🎓','success');
   }
+  handleAuthRedirect();
 
   document.addEventListener('keydown',e=>{
     if(e.key!=='Enter')return;
