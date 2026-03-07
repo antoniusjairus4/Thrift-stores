@@ -604,14 +604,32 @@
 
   /* ── FETCH LISTINGS (stub — replace body with Supabase query) ── */
   async function fetchListings() {
-    /*
-     * Replace this entire function body with the Supabase query
-     * described in the integration comment at the top.
-     * On success, call:
-     *   renderListings(data, count)
-     */
-    document.getElementById('empty-state').classList.add('show');
-    document.getElementById('result-count').textContent = 'Connect Supabase to load listings';
+    document.getElementById('result-count').textContent = 'Loading…';
+
+    let query = _supabase
+      .from('listings')
+      .select('*, profiles(full_name, dept, year, college)', { count: 'exact' })
+      .eq('status', 'active');
+
+    if (filters.college !== 'all')  query = query.eq('college', filters.college);
+    if (filters.categories.length)  query = query.in('category', filters.categories);
+    if (filters.conditions.length)  query = query.in('condition', filters.conditions);
+    if (filters.priceMin)           query = query.gte('price', filters.priceMin);
+    if (filters.priceMax)           query = query.lte('price', filters.priceMax);
+    if (filters.search)             query = query.ilike('title', `%${filters.search}%`);
+
+    const sortMap = {
+      'newest':     { col: 'created_at', asc: false },
+      'price-asc':  { col: 'price',      asc: true  },
+      'price-desc': { col: 'price',      asc: false },
+    };
+    const s = sortMap[currentSort];
+    query = query.order(s.col, { ascending: s.asc });
+    query = query.range(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE - 1);
+
+    const { data, count, error } = await query;
+    if (error) { showToast('Failed to load listings', 'error'); return; }
+    renderListings(data, count);
   }
 
   function renderListings(listings, totalCount) {
@@ -643,11 +661,19 @@
     document.getElementById('pagination').style.display = totalPages > 1 ? 'flex' : 'none';
   }
 
-  function saveItem(btn, id) {
+  async function saveItem(btn, id) {
     const saved = btn.classList.toggle('saved');
     btn.textContent = saved ? '♥' : '♡';
-    showToast(saved ? 'Saved!' : 'Removed from saved', 'success');
-    // TODO: upsert to Supabase saved_listings table using id
+    const { data: { user } } = await _supabase.auth.getUser();
+    if (!user) { showToast('Log in to save listings', 'error'); return; }
+    if (saved) {
+      await _supabase.from('saved_listings').insert({ user_id: user.id, listing_id: id });
+      showToast('Saved!', 'success');
+    } else {
+      await _supabase.from('saved_listings').delete()
+        .eq('user_id', user.id).eq('listing_id', id);
+      showToast('Removed from saved', 'success');
+    }
   }
 
   let _tt;

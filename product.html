@@ -313,33 +313,39 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  /*
-   * ─────────────────────────────────────────────
-   *  SUPABASE INTEGRATION POINTS
-   *  When backend is ready, replace the section
-   *  below with real Supabase fetches.
-   *
-   *  Tables needed:
-   *    listings  → id, title, price, category, condition,
-   *                description, image_urls[], created_at,
-   *                seller_id, college
-   *    profiles  → user_id, full_name, dept, year,
-   *                college, phone
-   *
-   *  Get listing ID from URL:
-   *    const listingId = new URLSearchParams(window.location.search).get('id');
-   *
-   *  Then fetch:
-   *    const { data: listing } = await supabase
-   *      .from('listings').select('*').eq('id', listingId).single();
-   *    const { data: seller } = await supabase
-   *      .from('profiles').select('*').eq('user_id', listing.seller_id).single();
-   *
-   *  Then call:
-   *    renderListing(listing);
-   *    renderSeller(seller);
-   * ─────────────────────────────────────────────
-   */
+  // Load product on page ready
+  let currentSellerId = null;
+
+  async function loadProduct() {
+    const id = new URLSearchParams(window.location.search).get('id');
+    if (!id) { window.location.href = 'browse.html'; return; }
+
+    const { data: listing, error } = await _supabase
+      .from('listings').select('*').eq('id', id).single();
+    if (error || !listing) { window.location.href = 'browse.html'; return; }
+
+    currentSellerId = listing.seller_id;
+    renderListing(listing);
+
+    const { data: seller } = await _supabase
+      .from('profiles').select('*').eq('id', listing.seller_id).single();
+    if (seller) renderSeller(seller);
+
+    // Check if already saved
+    const { data: { user } } = await _supabase.auth.getUser();
+    if (user) {
+      const { data: saved } = await _supabase.from('saved_listings')
+        .select('id').eq('user_id', user.id).eq('listing_id', id).single();
+      if (saved) {
+        const btn = document.getElementById('btn-save');
+        btn.textContent = '♥  Saved';
+        btn.classList.add('saved');
+        window._alreadySaved = true;
+      }
+    }
+  }
+
+  loadProduct();
 
   function renderListing(listing) {
     // breadcrumb
@@ -406,19 +412,11 @@
     btn.textContent = 'Number Revealed ✓';
     btn.disabled = true;
 
-    /*
-     * Fetch seller phone from Supabase:
-     *   const { data } = await supabase
-     *     .from('profiles')
-     *     .select('phone')
-     *     .eq('user_id', currentSellerId)
-     *     .single();
-     *   document.getElementById('phone-number').textContent = data.phone || 'Not provided';
-     */
+    const { data } = await _supabase
+      .from('profiles').select('phone')
+      .eq('id', currentSellerId).single();
 
-    // Until Supabase is connected:
-    document.getElementById('phone-number').textContent = 'Connect Supabase to load';
-
+    document.getElementById('phone-number').textContent = data?.phone || 'Not provided';
     document.getElementById('phone-reveal').classList.add('show');
     showToast('Contact revealed. Meet on campus to exchange.', 'success');
   }
@@ -431,14 +429,26 @@
   }
 
   /* ── SAVE TOGGLE ── */
-  let saved = false;
-  function toggleSave() {
-    saved = !saved;
+  async function toggleSave() {
+    const { data: { user } } = await _supabase.auth.getUser();
+    if (!user) { showToast('Log in to save listings', 'error'); return; }
+
+    const id = new URLSearchParams(window.location.search).get('id');
     const btn = document.getElementById('btn-save');
-    btn.textContent = saved ? '♥  Saved' : '♡  Save Listing';
-    btn.classList.toggle('saved', saved);
-    showToast(saved ? 'Listing saved!' : 'Removed from saved', saved ? 'success' : 'error');
-    // TODO: upsert to Supabase saved_listings table
+    const isSaved = btn.classList.contains('saved');
+
+    if (!isSaved) {
+      await _supabase.from('saved_listings').insert({ user_id: user.id, listing_id: id });
+      btn.textContent = '♥  Saved';
+      btn.classList.add('saved');
+      showToast('Listing saved!', 'success');
+    } else {
+      await _supabase.from('saved_listings').delete()
+        .eq('user_id', user.id).eq('listing_id', id);
+      btn.textContent = '♡  Save Listing';
+      btn.classList.remove('saved');
+      showToast('Removed from saved', 'success');
+    }
   }
 
   /* ── TOAST ── */
