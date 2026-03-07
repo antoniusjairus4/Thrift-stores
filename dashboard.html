@@ -206,6 +206,7 @@
   <div class="nav-right">
     <a href="index.html" class="nav-link">Browse</a>
     <button class="btn-post" onclick="openModal()">+ Post a Listing</button>
+    <button class="btn-post" style="background:transparent;border:1px solid rgba(199,120,200,.2);color:rgba(199,120,200,.5)" onclick="logout()">Log Out</button>
     <div class="nav-user">
       <div class="nav-avatar" id="nav-avatar">?</div>
       <div>
@@ -440,36 +441,164 @@
   function closeModalOutside(e) {
     if (e.target === document.getElementById('modal-overlay')) closeModal();
   }
-  function postListing() {
+  async function postListing() {
+    const title     = document.getElementById('listing-title').value.trim();
+    const category  = document.getElementById('listing-category').value;
+    const condition = document.getElementById('listing-condition').value;
+    const price     = document.getElementById('listing-price').value;
+    const desc      = document.getElementById('listing-desc').value.trim();
+
+    if (!title || !category || !condition || !price) {
+      showToast('Please fill in all required fields.', 'error'); return;
+    }
+
+    const { data: { user } } = await _supabase.auth.getUser();
+    if (!user) { showToast('You must be logged in.', 'error'); return; }
+
+    // Get seller's college from profile
+    const { data: profile } = await _supabase
+      .from('profiles').select('college').eq('id', user.id).single();
+
+    const { error } = await _supabase.from('listings').insert({
+      seller_id:   user.id,
+      title,
+      category,
+      condition,
+      price:       parseFloat(price),
+      description: desc,
+      college:     profile?.college || null,
+    });
+
+    if (error) { showToast(error.message, 'error'); return; }
+
     closeModal();
-    showToast('Listing posted! Will appear once connected to backend.', 'success');
+    showToast('Listing posted successfully! 🎉', 'success');
+    loadListings(user.id);
   }
 
-  function saveProfile() {
-    const fname = document.getElementById('prof-fname').value.trim();
-    const lname = document.getElementById('prof-lname').value.trim();
-    const dept  = document.getElementById('prof-dept').value;
-    const year  = document.getElementById('prof-year').value;
+  async function saveProfile() {
+    const fname   = document.getElementById('prof-fname').value.trim();
+    const lname   = document.getElementById('prof-lname').value.trim();
+    const dept    = document.getElementById('prof-dept').value;
+    const year    = document.getElementById('prof-year').value;
     const college = document.getElementById('prof-college').value.trim();
+    const phone   = document.getElementById('prof-phone')?.value.trim() || '';
 
     if (!fname) { showToast('Please enter your first name.', 'error'); return; }
 
-    // Update nav
+    const { data: { user } } = await _supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await _supabase.from('profiles').update({
+      full_name: fname + (lname ? ' ' + lname : ''),
+      dept, year, college, phone,
+    }).eq('id', user.id);
+
+    if (error) { showToast(error.message, 'error'); return; }
+
+    // Update nav + greeting live
     const initials = (fname[0] + (lname[0] || '')).toUpperCase();
     document.getElementById('nav-avatar').textContent = initials;
     document.getElementById('nav-uname').textContent = fname + (lname ? ' ' + lname : '');
     const metaParts = [dept, year, college].filter(Boolean);
     document.getElementById('nav-ubranch').textContent = metaParts.join(' · ') || 'Complete your profile';
-
-    // Update greeting
     document.getElementById('display-name').textContent = fname + '.';
-    document.getElementById('display-meta').textContent =
-      metaParts.join(' · ') + ' · ✓ Verified Student';
-
-    // Update profile avatar letter
+    document.getElementById('display-meta').textContent = metaParts.join(' · ') + ' · ✓ Verified Student';
     document.querySelector('.profile-avatar').childNodes[0].textContent = initials;
 
     showToast('Profile saved!', 'success');
+  }
+
+  async function loadListings(userId) {
+    const { data: listings } = await _supabase
+      .from('listings').select('*')
+      .eq('seller_id', userId)
+      .order('created_at', { ascending: false });
+
+    const grid = document.getElementById('listings-grid');
+    const empty = document.getElementById('listings-empty');
+    const countEl = document.getElementById('listings-count');
+
+    if (!listings || listings.length === 0) {
+      if (empty) empty.style.display = 'block';
+      if (countEl) countEl.textContent = '0';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    if (countEl) countEl.textContent = listings.length;
+    if (!grid) return;
+    grid.innerHTML = '';
+    listings.forEach(l => {
+      const card = document.createElement('div');
+      card.className = 'listing-card';
+      card.innerHTML = `
+        <div style="padding:.8rem 1rem;border-bottom:1px solid rgba(199,120,200,.08)">
+          <div style="font-family:'DM Mono',monospace;font-size:.6rem;color:rgba(199,120,200,.4);text-transform:uppercase;letter-spacing:.06em">${l.category}</div>
+          <div style="font-size:.9rem;font-weight:500;color:var(--blush);margin:.25rem 0">${l.title}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--violet)">₹${l.price}</div>
+        </div>
+        <div style="padding:.6rem 1rem;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-family:'DM Mono',monospace;font-size:.6rem;color:rgba(199,120,200,.35)">${l.condition} · ${l.status}</span>
+          <button onclick="deleteListing('${l.id}')" style="background:rgba(200,60,60,.15);border:1px solid rgba(200,60,60,.2);color:rgba(255,100,100,.6);font-size:.7rem;padding:.2rem .6rem;cursor:pointer">Delete</button>
+        </div>`;
+      card.onclick = (e) => { if(e.target.tagName !== 'BUTTON') location.href = 'product.html?id=' + l.id; };
+      grid.appendChild(card);
+    });
+  }
+
+  async function deleteListing(id) {
+    if (!confirm('Delete this listing?')) return;
+    const { error } = await _supabase.from('listings').delete().eq('id', id);
+    if (error) { showToast(error.message, 'error'); return; }
+    showToast('Listing deleted.', 'success');
+    const { data: { user } } = await _supabase.auth.getUser();
+    if (user) loadListings(user.id);
+  }
+
+  async function loadDashboard() {
+    const { data: { user } } = await _supabase.auth.getUser();
+    if (!user) { window.location.href = 'auth.html'; return; }
+
+    const { data: profile } = await _supabase
+      .from('profiles').select('*').eq('id', user.id).single();
+
+    if (profile) {
+      const fname = profile.full_name?.split(' ')[0] || 'Student';
+      const lname = profile.full_name?.split(' ').slice(1).join(' ') || '';
+      const initials = (profile.full_name?.[0] || 'S').toUpperCase();
+      const metaParts = [profile.dept, profile.year, profile.college].filter(Boolean);
+
+      // Nav
+      document.getElementById('nav-avatar').textContent = initials;
+      document.getElementById('nav-uname').textContent = profile.full_name || 'My Account';
+      document.getElementById('nav-ubranch').textContent = metaParts.join(' · ') || 'Complete your profile';
+
+      // Greeting
+      document.getElementById('display-name').textContent = fname + '.';
+      document.getElementById('display-meta').textContent =
+        metaParts.length ? metaParts.join(' · ') + ' · ✓ Verified Student' : 'Complete your profile to get started';
+
+      // Pre-fill profile form
+      if (document.getElementById('prof-fname')) {
+        document.getElementById('prof-fname').value = fname;
+        document.getElementById('prof-lname').value = lname;
+        document.getElementById('prof-college').value = profile.college || '';
+        document.getElementById('prof-dept').value = profile.dept || '';
+        document.getElementById('prof-year').value = profile.year || '';
+        if (document.getElementById('prof-phone'))
+          document.getElementById('prof-phone').value = profile.phone || '';
+      }
+
+      document.querySelector('.profile-avatar').childNodes[0].textContent = initials;
+    }
+
+    loadListings(user.id);
+  }
+
+  // Logout
+  async function logout() {
+    await _supabase.auth.signOut();
+    window.location.href = 'auth.html';
   }
 
   let tt;
@@ -480,6 +609,9 @@
     clearTimeout(tt);
     tt = setTimeout(() => t.classList.remove('show'), 3200);
   }
+
+  // Init
+  loadDashboard();
 </script>
 </body>
 </html>
