@@ -239,10 +239,10 @@
       <button class="btn btn-outline btn-lg" onclick="location.href='dashboard.html'">Sell Something</button>
     </div>
     <div class="hero-stats">
-      <div><div class="stat-num">1.2k</div><div class="stat-label">Students</div></div>
-      <div><div class="stat-num">48</div><div class="stat-label">Colleges</div></div>
-      <div><div class="stat-num">₹85</div><div class="stat-label">Avg. Textbook</div></div>
-      <div><div class="stat-num">3.4k</div><div class="stat-label">Items Sold</div></div>
+      <div><div class="stat-num" id="stat-students">—</div><div class="stat-label">Students</div></div>
+      <div><div class="stat-num" id="stat-listings">—</div><div class="stat-label">Listings</div></div>
+      <div><div class="stat-num" id="stat-avg">—</div><div class="stat-label">Avg. Price</div></div>
+      <div><div class="stat-num" id="stat-sold">—</div><div class="stat-label">Items Sold</div></div>
     </div>
   </div>
 
@@ -336,11 +336,11 @@
 <section class="section" style="padding-top:0">
   <div class="section-header"><div><div class="section-label">Shop by need</div><h2>Campus Categories</h2></div></div>
   <div class="categories-grid">
-    <div class="cat-card"><div class="cat-icon">📚</div><div class="cat-name">Textbooks</div><div class="cat-count">421 items</div></div>
-    <div class="cat-card"><div class="cat-icon">💻</div><div class="cat-name">Gadgets</div><div class="cat-count">215 items</div></div>
-    <div class="cat-card"><div class="cat-icon">🏠</div><div class="cat-name">Hostel Stuff</div><div class="cat-count">178 items</div></div>
-    <div class="cat-card"><div class="cat-icon">🔬</div><div class="cat-name">Lab Equipment</div><div class="cat-count">93 items</div></div>
-    <div class="cat-card"><div class="cat-icon">📝</div><div class="cat-name">Notes & Stationery</div><div class="cat-count">140 items</div></div>
+    <div class="cat-card" onclick="location.href='browse.html'"><div class="cat-icon">📚</div><div class="cat-name">Textbooks</div><div class="cat-count" id="cat-Textbooks">— items</div></div>
+    <div class="cat-card" onclick="location.href='browse.html'"><div class="cat-icon">💻</div><div class="cat-name">Gadgets</div><div class="cat-count" id="cat-Gadgets">— items</div></div>
+    <div class="cat-card" onclick="location.href='browse.html'"><div class="cat-icon">🏠</div><div class="cat-name">Hostel Stuff</div><div class="cat-count" id="cat-Hostel">— items</div></div>
+    <div class="cat-card" onclick="location.href='browse.html'"><div class="cat-icon">🔬</div><div class="cat-name">Lab Equipment</div><div class="cat-count" id="cat-Lab">— items</div></div>
+    <div class="cat-card" onclick="location.href='browse.html'"><div class="cat-icon">📝</div><div class="cat-name">Notes & Stationery</div><div class="cat-count" id="cat-Notes">— items</div></div>
     <div class="cat-card"><div class="cat-icon">👕</div><div class="cat-name">Clothing & Uniform</div><div class="cat-count">112 items</div></div>
   </div>
 </section>
@@ -470,7 +470,51 @@
     document.getElementById('hero-students').textContent = listings.length * 2 + '+';
   }
 
+  async function loadRealStats() {
+    // Total active listings
+    const { count: totalListings } = await _supabase
+      .from('listings').select('*', { count: 'exact', head: true })
+      .eq('status', 'active');
+
+    // Total sold listings
+    const { count: totalSold } = await _supabase
+      .from('listings').select('*', { count: 'exact', head: true })
+      .eq('status', 'sold');
+
+    // Total unique students (profiles)
+    const { count: totalStudents } = await _supabase
+      .from('profiles').select('*', { count: 'exact', head: true });
+
+    // Average price
+    const { data: priceData } = await _supabase
+      .from('listings').select('price').eq('status', 'active');
+    const avg = priceData?.length
+      ? Math.round(priceData.reduce((s, l) => s + Number(l.price), 0) / priceData.length)
+      : 0;
+
+    // Update hero stats
+    if (document.getElementById('stat-students'))
+      document.getElementById('stat-students').textContent = totalStudents || 0;
+    if (document.getElementById('stat-listings'))
+      document.getElementById('stat-listings').textContent = totalListings || 0;
+    if (document.getElementById('stat-avg'))
+      document.getElementById('stat-avg').textContent = avg ? '₹' + avg : '—';
+    if (document.getElementById('stat-sold'))
+      document.getElementById('stat-sold').textContent = totalSold || 0;
+
+    // Category counts
+    const categories = ['Textbooks','Gadgets','Hostel','Lab','Notes','Clothing'];
+    for (const cat of categories) {
+      const { count } = await _supabase
+        .from('listings').select('*', { count: 'exact', head: true })
+        .eq('category', cat).eq('status', 'active');
+      const el = document.getElementById('cat-' + cat);
+      if (el) el.textContent = (count || 0) + ' items';
+    }
+  }
+
   loadHomeListings();
+  loadRealStats();
 </script>
 </body>
 </html>
