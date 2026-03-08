@@ -180,6 +180,52 @@
     .toast.show{transform:translateX(-50%) translateY(0)}
     .toast.success::before{content:'✓';color:var(--violet);font-weight:700}
 
+
+    /* ===== MOBILE RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      nav { padding: .85rem 1.2rem; }
+      .nav-search { display: none; }
+      .nav-right { gap: .6rem; }
+
+      .browse-header { padding: 1.2rem 1.5rem .8rem; }
+      .browse-header h1 { font-size: 1.4rem; }
+      .body-wrap { grid-template-columns: 1fr; padding: 1rem 1.2rem 3rem; }
+
+      /* Sidebar becomes a collapsible drawer on mobile */
+      .sidebar { position: fixed; top: 0; left: -100%; width: 80%; max-width: 300px; height: 100vh; background: var(--navy-mid); z-index: 200; padding: 1.5rem; overflow-y: auto; transition: left .3s ease; border-right: 1px solid rgba(199,120,200,.2); }
+      .sidebar.open { left: 0; }
+      .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 199; }
+      .sidebar-overlay.show { display: block; }
+      .mobile-filter-btn { display: flex !important; }
+
+      .listings-grid { grid-template-columns: repeat(2, 1fr); gap: .9rem; }
+      .listings-grid.two-col { grid-template-columns: repeat(2, 1fr); }
+
+      .sort-bar { flex-wrap: wrap; gap: .6rem; }
+      .active-tags { flex-wrap: wrap; }
+    }
+
+    @media (max-width: 480px) {
+      .browse-header { padding: 1rem; }
+      .body-wrap { padding: .8rem 1rem 3rem; }
+      .listings-grid { grid-template-columns: 1fr 1fr; gap: .7rem; }
+      .listing-img { height: 130px; }
+      .listing-info { padding: .65rem .75rem .8rem; }
+      .listing-name { font-size: .82rem; }
+      .listing-price { font-size: 1.05rem; }
+      .sort-bar { padding: .7rem 0; }
+    }
+
+    /* Mobile filter button (hidden on desktop) */
+    .mobile-filter-btn { display: none; align-items: center; gap: .5rem; padding: .55rem 1rem; background: rgba(123,45,139,.2); border: 1px solid rgba(199,120,200,.25); color: var(--violet); font-family: 'DM Mono', monospace; font-size: .72rem; letter-spacing: .06em; cursor: pointer; }
+
+    /* Sidebar close button */
+    .sidebar-close { display: none; width: 100%; text-align: right; background: none; border: none; color: rgba(199,120,200,.5); font-size: 1.2rem; cursor: pointer; margin-bottom: 1rem; }
+
+    @media (max-width: 900px) {
+      .sidebar-close { display: block; }
+    }
+
     @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
@@ -322,7 +368,8 @@
   <div class="listings-area">
 
     <!-- SORT BAR -->
-    <div class="sort-bar">
+    <button class="mobile-filter-btn" onclick="openSidebar()">⚙ Filters</button>
+  <div class="sort-bar">
       <div class="sort-left" id="active-tags">
         <!-- active filter tags injected here by JS -->
       </div>
@@ -723,6 +770,17 @@
     fetchListings();
   }
   init();
+
+  function openSidebar() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('sidebar-overlay').classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('show');
+    document.body.style.overflow = '';
+  }
 </script>
 </body>
 </html>

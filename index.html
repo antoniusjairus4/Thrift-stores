@@ -123,7 +123,7 @@
     .product-card:nth-child(3){animation-delay:.24s}
     .product-card:nth-child(4){animation-delay:.32s}
 
-    .product-img{height:200px;display:flex;align-items:center;justify-content:center;font-size:3.5rem;position:relative}
+    .product-img{height:185px;display:flex;align-items:center;justify-content:center;font-size:3.5rem;position:relative;overflow:hidden}
     .p1{background:rgba(123,45,139,.18)} .p2{background:rgba(90,31,104,.18)} .p3{background:rgba(199,120,200,.09)} .p4{background:rgba(123,45,139,.13)} .p5{background:rgba(37,37,82,.4)} .p6{background:rgba(90,31,104,.14)} .p7{background:rgba(199,120,200,.07)} .p8{background:rgba(37,37,82,.45)}
 
     .product-condition{position:absolute;top:.7rem;left:.7rem;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.05em;text-transform:uppercase;padding:.22rem .55rem}
@@ -152,7 +152,7 @@
 
     /* CATEGORIES */
     .categories-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:.9rem}
-    .cat-card{background:rgba(28,28,60,.5);border:1px solid rgba(199,120,200,.11);padding:1.3rem .9rem;text-align:center;cursor:pointer;transition:all .25s;backdrop-filter:blur(8px)}
+    .cat-card{background:rgba(28,28,60,.5);border:1px solid rgba(199,120,200,.11);padding:1.4rem .9rem;text-align:center;cursor:pointer;transition:all .25s;backdrop-filter:blur(8px);position:relative;overflow:hidden}
     .cat-card:hover{background:rgba(123,45,139,.22);border-color:rgba(199,120,200,.32);transform:translateY(-3px);box-shadow:0 8px 24px rgba(123,45,139,.18)}
     .cat-icon{font-size:1.8rem;margin-bottom:.6rem}
     .cat-name{font-weight:500;font-size:.83rem;color:var(--blush)}
@@ -160,8 +160,8 @@
 
     /* HOW IT WORKS — campus focused */
     .how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2.5rem}
-    .how-step{background:rgba(28,28,60,.4);border:1px solid rgba(199,120,200,.1);padding:2rem;transition:border-color .3s,background .3s}
-    .how-step:hover{background:rgba(123,45,139,.1);border-color:rgba(199,120,200,.25)}
+    .how-step{background:rgba(28,28,60,.4);border:1px solid rgba(199,120,200,.1);padding:2.2rem;transition:border-color .3s,background .3s,transform .3s}
+    .how-step:hover{background:rgba(123,45,139,.1);border-color:rgba(199,120,200,.25);transform:translateY(-4px)}
     .how-num{font-family:'Playfair Display',serif;font-size:4rem;font-weight:900;color:rgba(199,120,200,.08);line-height:1;margin-bottom:.4rem}
     .how-icon{font-size:1.6rem;margin-bottom:.8rem}
     .how-title{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;margin-bottom:.65rem;color:var(--blush)}
@@ -195,6 +195,78 @@
     .footer-col li:hover{color:var(--blush)}
     .footer-bottom{background:rgba(14,14,28,.85);border-top:1px solid rgba(199,120,200,.06);padding:1.3rem 4rem;display:flex;justify-content:space-between;align-items:center;font-size:.75rem;color:rgba(237,232,238,.18);font-family:'DM Mono',monospace;letter-spacing:.03em}
 
+
+
+    /* Hamburger + Mobile Menu */
+    .nav-hamburger { display: none; background: none; border: 1px solid rgba(199,120,200,.25); color: var(--violet); width: 36px; height: 36px; font-size: 1.1rem; cursor: pointer; align-items: center; justify-content: center; transition: background .2s; }
+    .nav-hamburger:hover { background: rgba(199,120,200,.1); }
+    .mobile-menu { display: none; position: absolute; top: 100%; left: 0; right: 0; background: rgba(22,22,48,.97); border-bottom: 1px solid rgba(199,120,200,.15); padding: 1.2rem 1.5rem; flex-direction: column; gap: .8rem; backdrop-filter: blur(20px); z-index: 99; animation: fadeDown .2s ease both; }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a { color: rgba(237,232,238,.6); text-decoration: none; font-size: .9rem; font-weight: 500; padding: .4rem 0; border-bottom: 1px solid rgba(199,120,200,.07); transition: color .2s; }
+    .mobile-menu a:hover { color: var(--violet); }
+    @media (max-width: 900px) { .nav-hamburger { display: flex; } }
+
+    /* ===== MOBILE RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { display: none; }
+      .nav-verified { display: none; }
+      .nav-actions { gap: .5rem; }
+      .btn { padding: .45rem 1rem; font-size: .8rem; }
+
+      .hero { grid-template-columns: 1fr; min-height: auto; }
+      .hero-left { padding: 3.5rem 1.5rem 2rem; }
+      .hero-right { display: none; }
+      h1 { font-size: clamp(2.2rem, 8vw, 3rem); }
+      .hero-stats { gap: 1.2rem; flex-wrap: wrap; }
+      .hero-cta { flex-direction: column; }
+      .hero-cta .btn-lg { width: 100%; text-align: center; }
+
+      .search-bar { padding: 1.2rem 1.5rem; flex-wrap: wrap; gap: .7rem; }
+      .search-input-wrap { min-width: 100%; }
+      .filter-select { flex: 1; min-width: 0; }
+
+      .section { padding: 2.5rem 1.5rem; }
+      .section-header { flex-direction: column; align-items: flex-start; gap: .5rem; }
+      h2 { font-size: 1.6rem; }
+
+      .product-grid { grid-template-columns: repeat(2, 1fr); gap: .9rem; }
+      .categories-grid { grid-template-columns: repeat(3, 1fr); gap: .7rem; }
+      .how-grid { grid-template-columns: 1fr; gap: 1.2rem; }
+      .trust-section { padding: 1.5rem; grid-template-columns: 1fr; gap: 1rem; margin: 0; }
+
+      .sell-banner { margin: 0 1.5rem; padding: 2rem 1.5rem; grid-template-columns: 1fr; gap: 1.2rem; }
+      .sell-banner::before { display: none; }
+      .sell-banner .btn-violet { width: 100%; text-align: center; padding: .88rem; }
+
+      footer { grid-template-columns: 1fr 1fr; gap: 2rem; padding: 2.5rem 1.5rem; }
+      .footer-bottom { padding: 1rem 1.5rem; flex-direction: column; gap: .4rem; text-align: center; }
+    }
+
+    @media (max-width: 480px) {
+      nav { padding: .85rem 1rem; }
+      .nav-logo { font-size: 1.2rem; }
+      .hero-left { padding: 2.5rem 1rem 1.5rem; }
+      h1 { font-size: 2rem; }
+      .hero-sub { font-size: .9rem; }
+      .btn-lg { font-size: .88rem; padding: .8rem 1.4rem; }
+
+      .section { padding: 2rem 1rem; }
+      .search-bar { padding: 1rem; }
+      .product-grid { grid-template-columns: 1fr 1fr; gap: .7rem; }
+      .categories-grid { grid-template-columns: repeat(2, 1fr); }
+      .product-img { height: 130px; }
+      .product-info { padding: .7rem .8rem .85rem; }
+      .product-name { font-size: .82rem; }
+      .product-price { font-size: 1.05rem; }
+      .seller-tag { padding: .35rem .5rem; }
+
+      footer { grid-template-columns: 1fr; gap: 1.5rem; }
+      .sell-banner { margin: 0 1rem; padding: 1.8rem 1.2rem; }
+
+      .ticker-inner { font-size: .65rem; }
+    }
+
     @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
     @keyframes fadeDown{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:translateY(0)}}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -221,6 +293,18 @@
     <div class="nav-verified">Student Verified Only</div>
     <button class="btn btn-outline" onclick="location.href='auth.html'">Log In</button>
     <button class="btn btn-solid" onclick="location.href='auth.html'">Join Free</button>
+    <button class="nav-hamburger" onclick="toggleMobileMenu()" id="hamburger" aria-label="Menu">☰</button>
+  </div>
+  <!-- Mobile Menu Drawer -->
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="browse.html">Browse</a>
+    <a href="browse.html">Categories</a>
+    <a href="dashboard.html">My Campus</a>
+    <a href="#how-it-works" onclick="closeMobileMenu()">How it works</a>
+    <div style="display:flex;gap:.7rem;padding-top:.5rem;border-top:1px solid rgba(199,120,200,.1)">
+      <button class="btn btn-outline" style="flex:1" onclick="location.href='auth.html'">Log In</button>
+      <button class="btn btn-solid" style="flex:1" onclick="location.href='auth.html'">Join Free</button>
+    </div>
   </div>
 </nav>
 
@@ -512,6 +596,18 @@
       if (el) el.textContent = (count || 0) + ' items';
     }
   }
+
+  function toggleMobileMenu() {
+    const menu = document.getElementById('mobile-menu');
+    menu.classList.toggle('open');
+  }
+  function closeMobileMenu() {
+    document.getElementById('mobile-menu').classList.remove('open');
+  }
+  // Close menu on outside click
+  document.addEventListener('click', e => {
+    if (!e.target.closest('nav')) document.getElementById('mobile-menu')?.classList.remove('open');
+  });
 
   loadHomeListings();
   loadRealStats();

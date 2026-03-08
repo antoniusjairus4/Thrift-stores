@@ -158,6 +158,26 @@
     .toast.success::before{content:'✓';color:var(--violet);font-weight:700}
     .toast.error::before{content:'✕';color:#E08080;font-weight:700}
 
+
+    /* ===== MOBILE RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      html, body { overflow: auto; height: auto; }
+      .page { grid-template-columns: 1fr; min-height: 100vh; }
+      .left-panel { display: none; }
+      .right-panel { padding: 2rem 1.2rem; min-height: 100vh; align-items: flex-start; padding-top: 3rem; }
+      .glass-card { padding: 2rem 1.5rem 1.8rem; }
+    }
+
+    @media (max-width: 480px) {
+      .right-panel { padding: 1.5rem 1rem; }
+      .glass-card { padding: 1.6rem 1.2rem 1.4rem; }
+      .input-row { grid-template-columns: 1fr; gap: 0; }
+      .college-pills { flex-direction: column; gap: .5rem; }
+      .college-pill { padding: .65rem .9rem; }
+      .form-heading { font-size: 1.4rem; }
+      .auth-tabs { margin-bottom: 1.4rem; }
+    }
+
     @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
     @keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(35px,-45px) scale(1.06)}66%{transform:translate(-25px,25px) scale(.96)}}
     @keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}

@@ -190,6 +190,40 @@
     .btn-confirm{padding:.65rem 1.6rem;background:var(--purple);color:white;border:none;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;transition:all .2s}
     .btn-confirm:hover{background:var(--purple-dark);box-shadow:0 4px 16px rgba(123,45,139,.38)}
 
+
+    /* ===== MOBILE RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      nav { padding: .85rem 1.2rem; }
+      .nav-links { display: none; }
+
+      .dash-layout { grid-template-columns: 1fr; gap: 0; }
+
+      /* Sidebar becomes tab bar at bottom on mobile */
+      .dash-sidebar { position: fixed; bottom: 0; left: 0; right: 0; top: auto; height: auto; width: 100%; border-right: none; border-top: 1px solid rgba(199,120,200,.15); background: rgba(22,22,48,.96); backdrop-filter: blur(20px); z-index: 100; padding: .5rem 0; display: flex; flex-direction: row; justify-content: space-around; }
+      .sidebar-profile { display: none; }
+      .sidebar-nav { display: flex; flex-direction: row; width: 100%; padding: 0; gap: 0; }
+      .sidebar-nav-item { flex: 1; flex-direction: column; gap: .2rem; padding: .5rem .3rem; font-size: .6rem; text-align: center; border-left: none !important; border-bottom: 2px solid transparent; }
+      .sidebar-nav-item.active { border-bottom-color: var(--violet); border-left: none !important; }
+      .sidebar-nav-icon { font-size: .95rem; }
+
+      .dash-content { padding: 1.5rem 1.2rem 5rem; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); gap: .8rem; }
+
+      /* Modal full screen on mobile */
+      .modal { max-width: 100%; width: 100%; margin: 0; border-radius: 0; min-height: 100vh; padding: 2rem 1.5rem; }
+      .modal-overlay { align-items: flex-end; }
+    }
+
+    @media (max-width: 480px) {
+      .dash-content { padding: 1.2rem 1rem 5rem; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .stat-card-num { font-size: 1.6rem; }
+      .section-title { font-size: 1.1rem; }
+      .modal { padding: 1.5rem 1.2rem; }
+      .modal-row { grid-template-columns: 1fr; }
+      .modal-title { font-size: 1.2rem; }
+    }
+
     @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
