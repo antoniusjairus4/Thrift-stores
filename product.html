@@ -147,6 +147,24 @@
     .toast.error::before{content:'✕';color:#E08080;font-weight:700}
 
 
+
+    /* PRE-BOOK BUTTON */
+    .btn-prebook { width:100%; padding:1rem; background: linear-gradient(135deg, #7B2D8B, #C778C8); color:white; border:none; font-family:'DM Sans',sans-serif; font-size:.95rem; font-weight:600; cursor:pointer; transition:all .25s; letter-spacing:.02em; margin-bottom:.7rem; position:relative; overflow:hidden; }
+    .btn-prebook:hover { box-shadow:0 8px 28px rgba(199,120,200,.45); transform:translateY(-1px); }
+    .btn-prebook:disabled { opacity:.5; cursor:default; transform:none; box-shadow:none; }
+    .btn-prebook.reserved { background: rgba(199,120,200,.12); border: 1.5px solid rgba(199,120,200,.3); color: var(--violet); }
+    .btn-prebook.cancel { background: rgba(200,60,60,.12); border: 1.5px solid rgba(200,80,80,.3); color: rgba(255,120,120,.8); }
+    .btn-prebook.cancel:hover { background: rgba(200,60,60,.2); box-shadow: none; transform: none; }
+
+    /* RESERVED BADGE */
+    .reserved-banner { background: rgba(199,120,200,.1); border: 1px solid rgba(199,120,200,.25); padding: .75rem 1rem; margin-bottom: .7rem; display: none; }
+    .reserved-banner.show { display: block; }
+    .reserved-banner-title { font-family: 'DM Mono', monospace; font-size: .65rem; color: var(--violet); letter-spacing: .08em; text-transform: uppercase; margin-bottom: .2rem; }
+    .reserved-banner-text { font-size: .8rem; color: rgba(237,232,238,.5); }
+
+    /* CONDITION BADGE for reserved */
+    .status-reserved { background: rgba(199,120,200,.2); color: var(--violet); border: 1px solid rgba(199,120,200,.35); font-family: 'DM Mono', monospace; font-size: .65rem; padding: .2rem .6rem; letter-spacing: .06em; text-transform: uppercase; display: inline-block; margin-left: .5rem; }
+
     /* ===== MOBILE RESPONSIVE ===== */
     @media (max-width: 900px) {
       nav { padding: .85rem 1.2rem; }
@@ -280,6 +298,15 @@
       <div class="price-card-amount" id="pc-price"></div>
       <div class="price-card-sub">Campus price · Meet in person</div>
 
+      <!-- Reserved banner -->
+      <div class="reserved-banner" id="reserved-banner">
+        <div class="reserved-banner-title">🔒 Reserved</div>
+        <div class="reserved-banner-text" id="reserved-banner-text">This item has been pre-booked by another student.</div>
+      </div>
+
+      <button class="btn-prebook" id="btn-prebook" onclick="handlePrebook()">
+        🔒 &nbsp;Pre-book This Item
+      </button>
       <button class="btn-contact" id="btn-contact" onclick="revealPhone()">
         Show Seller's Number
       </button>
@@ -362,8 +389,12 @@
       .from('profiles').select('*').eq('id', listing.seller_id).single();
     if (seller) renderSeller(seller);
 
-    // Check if already saved
+    // Check saved + prebook status
     const { data: { user } } = await _supabase.auth.getUser();
+
+    // Update prebook UI based on listing status
+    updatePrebookUI(listing, user);
+
     if (user) {
       const { data: saved } = await _supabase.from('saved_listings')
         .select('id').eq('user_id', user.id).eq('listing_id', id).single();
@@ -373,10 +404,122 @@
         btn.classList.add('saved');
         window._alreadySaved = true;
       }
+
+      // Hide prebook if this is user's own listing
+      if (user.id === listing.seller_id) {
+        document.getElementById('btn-prebook').style.display = 'none';
+        document.getElementById('btn-contact').style.display = 'none';
+      }
     }
   }
 
+  // Track current listing globally
+  let currentListing = null;
+
   loadProduct();
+
+  function updatePrebookUI(listing, user) {
+    const btn = document.getElementById('btn-prebook');
+    const banner = document.getElementById('reserved-banner');
+    const bannerText = document.getElementById('reserved-banner-text');
+    const contactBtn = document.getElementById('btn-contact');
+
+    if (listing.status === 'reserved') {
+      banner.classList.add('show');
+
+      if (user && listing.buyer_id === user.id) {
+        // Current user pre-booked it
+        bannerText.textContent = 'You have pre-booked this item. Arrange to meet the seller on campus!';
+        btn.textContent = '✕  Cancel Pre-booking';
+        btn.classList.add('cancel');
+      } else {
+        // Someone else booked it
+        bannerText.textContent = 'This item has been pre-booked by another student.';
+        btn.textContent = '🔒  Reserved';
+        btn.classList.add('reserved');
+        btn.disabled = true;
+        contactBtn.disabled = true;
+      }
+    } else if (listing.status === 'sold') {
+      btn.textContent = '✓  Sold';
+      btn.classList.add('reserved');
+      btn.disabled = true;
+      contactBtn.disabled = true;
+    } else {
+      btn.textContent = '🔒  Pre-book This Item';
+    }
+    currentListing = listing;
+  }
+
+  async function handlePrebook() {
+    const { data: { user } } = await _supabase.auth.getUser();
+    if (!user) { showToast('Log in to pre-book items', 'error'); location.href = 'auth.html'; return; }
+
+    const btn = document.getElementById('btn-prebook');
+
+    // Cancel pre-booking
+    if (btn.classList.contains('cancel')) {
+      btn.disabled = true;
+      btn.textContent = 'Cancelling…';
+      const { error } = await _supabase.from('listings')
+        .update({ status: 'active', buyer_id: null })
+        .eq('id', currentListing.id);
+      if (error) { showToast(error.message, 'error'); btn.disabled = false; return; }
+
+      // Send cancel notification email
+      await sendPrebookEmail('cancel', currentListing, user);
+
+      showToast('Pre-booking cancelled.', 'success');
+      setTimeout(() => location.reload(), 1000);
+      return;
+    }
+
+    // Pre-book
+    btn.disabled = true;
+    btn.textContent = 'Booking…';
+
+    const { error } = await _supabase.from('listings')
+      .update({ status: 'reserved', buyer_id: user.id })
+      .eq('id', currentListing.id);
+
+    if (error) { showToast(error.message, 'error'); btn.disabled = false; btn.textContent = '🔒  Pre-book This Item'; return; }
+
+    // Send notification email
+    await sendPrebookEmail('book', currentListing, user);
+
+    showToast('Item pre-booked! Check your email for details.', 'success');
+    setTimeout(() => location.reload(), 1000);
+  }
+
+  async function sendPrebookEmail(action, listing, buyer) {
+    try {
+      // Get buyer profile
+      const { data: buyerProfile } = await _supabase
+        .from('profiles').select('full_name, dept, year, college').eq('id', buyer.id).single();
+
+      // Get seller email from auth (via profiles)
+      const { data: sellerProfile } = await _supabase
+        .from('profiles').select('full_name').eq('id', listing.seller_id).single();
+
+      await _supabase.functions.invoke('send-prebook-email', {
+        body: {
+          action,
+          listing: { id: listing.id, title: listing.title, price: listing.price },
+          buyer: {
+            email: buyer.email,
+            name: buyerProfile?.full_name || 'A student',
+            dept: buyerProfile?.dept || '',
+            year: buyerProfile?.year || '',
+            college: buyerProfile?.college || '',
+          },
+          seller_id: listing.seller_id,
+          seller_name: sellerProfile?.full_name || 'Seller',
+        }
+      });
+    } catch (e) {
+      console.log('Email notification skipped:', e.message);
+    }
+  }
 
   function renderListing(listing) {
     // breadcrumb
