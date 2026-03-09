@@ -265,9 +265,9 @@
 
     <div class="stat-card active" id="card-listings" onclick="openSection('listings')">
       <div class="sc-top"><div class="sc-icon">📦</div><div class="sc-arrow">▼</div></div>
-      <div class="sc-num">0</div>
+      <div class="sc-num" id="listings-count">0</div>
       <div class="sc-label">My Listings</div>
-      <div class="sc-sub">Nothing posted yet</div>
+      <div class="sc-sub" id="listings-sub">Nothing posted yet</div>
       <div class="sc-bar"></div>
     </div>
 
@@ -308,14 +308,13 @@
           <button class="btn-sm btn-sm-solid" onclick="openModal()">+ New Listing</button>
         </div>
       </div>
-      <div class="empty-state">
+      <div class="empty-state" id="listings-empty">
         <div class="empty-icon">📦</div>
         <div class="empty-title">No listings yet</div>
         <div class="empty-text">Post your first item — textbook, gadget, hostel stuff — and your batchmates can find it here.</div>
         <button class="empty-btn" onclick="openModal()">Post your first listing →</button>
       </div>
-      <!-- When connected to Supabase, listings will render here dynamically -->
-      <div class="listings-grid" id="listings-grid" style="display:none"></div>
+      <div class="listings-grid" id="listings-grid"></div>
     </div>
 
     <!-- MY PURCHASES -->
@@ -605,10 +604,22 @@
     if (!listings || listings.length === 0) {
       if (empty) empty.style.display = 'block';
       if (countEl) countEl.textContent = '0';
+      const subEl = document.getElementById('listings-sub');
+      if (subEl) subEl.textContent = 'Nothing posted yet';
       return;
     }
     if (empty) empty.style.display = 'none';
     if (countEl) countEl.textContent = listings.length;
+    const subEl = document.getElementById('listings-sub');
+    if (subEl) subEl.textContent = listings.length === 1 ? '1 active listing' : listings.length + ' listings posted';
+
+    // Update earnings stat card
+    const totalEarned = listings.filter(l => l.status === 'sold').reduce((s, l) => s + Number(l.price), 0);
+    const earnedEl = document.querySelector('#card-stats .sc-num');
+    if (earnedEl) earnedEl.textContent = totalEarned > 0 ? '₹' + totalEarned : '₹0';
+    const earnedSub = document.querySelector('#card-stats .sc-sub');
+    const soldCount = listings.filter(l => l.status === 'sold').length;
+    if (earnedSub) earnedSub.textContent = soldCount > 0 ? soldCount + ' item(s) sold' : 'Start selling to track this';
     if (!grid) return;
     grid.innerHTML = '';
     listings.forEach(l => {
