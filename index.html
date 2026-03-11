@@ -239,10 +239,10 @@
       <button class="btn btn-outline btn-lg" onclick="location.href='dashboard.html'">Sell Something</button>
     </div>
     <div class="hero-stats">
-      <div><div class="stat-num">1.2k</div><div class="stat-label">Students</div></div>
-      <div><div class="stat-num">48</div><div class="stat-label">Colleges</div></div>
-      <div><div class="stat-num">₹85</div><div class="stat-label">Avg. Textbook</div></div>
-      <div><div class="stat-num">3.4k</div><div class="stat-label">Items Sold</div></div>
+      <div><div class="stat-num" id="stat-students">—</div><div class="stat-label">Students</div></div>
+      <div><div class="stat-num" id="stat-listings">—</div><div class="stat-label">Listings</div></div>
+      <div><div class="stat-num" id="stat-avg">—</div><div class="stat-label">Avg. Price</div></div>
+      <div><div class="stat-num" id="stat-sold">—</div><div class="stat-label">Items Sold</div></div>
     </div>
   </div>
 
@@ -253,44 +253,14 @@
         <div class="college-card-name">Sri Krishna College of Engg.</div>
         <div class="college-card-sub">Coimbatore, Tamil Nadu</div>
         <div class="college-card-stats">
-          <div><div class="cc-stat-num">214</div><div class="cc-stat-label">Listings</div></div>
-          <div><div class="cc-stat-num">387</div><div class="cc-stat-label">Students</div></div>
-          <div><div class="cc-stat-num">₹92</div><div class="cc-stat-label">Avg Price</div></div>
+          <div><div class="cc-stat-num" id="hero-count">—</div><div class="cc-stat-label">Listings</div></div>
+          <div><div class="cc-stat-num" id="hero-students">—</div><div class="cc-stat-label">Students</div></div>
+          <div><div class="cc-stat-num" id="hero-avg">—</div><div class="cc-stat-label">Avg Price</div></div>
         </div>
       </div>
-      <div class="listing-previews">
-        <div class="listing-preview">
-          <div class="lp-emoji">📗</div>
-          <div class="lp-info">
-            <div class="lp-name">Engineering Maths — Vol 2</div>
-            <div class="lp-meta">Rajan · CSE 3rd Year · SKCET</div>
-          </div>
-          <div class="lp-right">
-            <div class="lp-price">₹120</div>
-            <div class="lp-badge">Good</div>
-          </div>
-        </div>
-        <div class="listing-preview">
-          <div class="lp-emoji">💻</div>
-          <div class="lp-info">
-            <div class="lp-name">Laptop Stand — Adjustable</div>
-            <div class="lp-meta">Priya · ECE 2nd Year · PSG</div>
-          </div>
-          <div class="lp-right">
-            <div class="lp-price">₹280</div>
-            <div class="lp-badge">Like New</div>
-          </div>
-        </div>
-        <div class="listing-preview">
-          <div class="lp-emoji">🎧</div>
-          <div class="lp-info">
-            <div class="lp-name">boAt Rockerz 450</div>
-            <div class="lp-meta">Akash · IT 4th Year · CIT</div>
-          </div>
-          <div class="lp-right">
-            <div class="lp-price">₹650</div>
-            <div class="lp-badge">Like New</div>
-          </div>
+      <div class="listing-previews" id="hero-previews">
+        <div class="listing-preview" style="justify-content:center;opacity:.4">
+          <div class="lp-info"><div class="lp-name">Loading latest listings…</div></div>
         </div>
       </div>
     </div>
@@ -346,77 +316,8 @@
     <div><div class="section-label">Fresh from campus</div><h2>Recent Listings</h2></div>
     <a href="browse.html" class="section-link">View all →</a>
   </div>
-  <div class="product-grid">
-
-    <div class="product-card">
-      <div class="product-img p1"><span>📗</span><div class="product-condition cond-good">Good</div><div class="product-save">♡</div></div>
-      <div class="product-info">
-        <div class="product-category">Textbooks · Maths</div>
-        <div class="product-name">Engineering Mathematics Vol. 2</div>
-        <div class="seller-tag"><div class="seller-avatar">R</div><div><div class="seller-name">Rajan K.</div><div class="seller-branch">CSE · 3rd Year</div></div><div class="seller-verified">✓</div></div>
-        <div class="product-bottom"><div class="product-price">₹120 <span>/ book</span></div><div class="product-college">SKCET</div></div>
-      </div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-img p2"><span>💻</span><div class="product-condition cond-like-new">Like New</div><div class="product-save">♡</div></div>
-      <div class="product-info">
-        <div class="product-category">Gadgets · Accessories</div>
-        <div class="product-name">Adjustable Laptop Stand — Black</div>
-        <div class="seller-tag"><div class="seller-avatar">P</div><div><div class="seller-name">Priya S.</div><div class="seller-branch">ECE · 2nd Year</div></div><div class="seller-verified">✓</div></div>
-        <div class="product-bottom"><div class="product-price">₹280 <span>/ unit</span></div><div class="product-college">PSG Tech</div></div>
-      </div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-img p3"><span>🧲</span><div class="product-condition cond-good">Good</div><div class="product-save">♡</div></div>
-      <div class="product-info">
-        <div class="product-category">Lab Equipment · Physics</div>
-        <div class="product-name">Digital Multimeter — Uni-T UT61E</div>
-        <div class="seller-tag"><div class="seller-avatar">A</div><div><div class="seller-name">Arun M.</div><div class="seller-branch">EEE · 4th Year</div></div><div class="seller-verified">✓</div></div>
-        <div class="product-bottom"><div class="product-price">₹450 <span>/ unit</span></div><div class="product-college">CIT</div></div>
-      </div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-img p4"><span>🎧</span><div class="product-condition cond-like-new">Like New</div><div class="product-save">♡</div></div>
-      <div class="product-info">
-        <div class="product-category">Gadgets · Audio</div>
-        <div class="product-name">boAt Rockerz 450 Headphones</div>
-        <div class="seller-tag"><div class="seller-avatar">K</div><div><div class="seller-name">Karthik V.</div><div class="seller-branch">IT · 3rd Year</div></div><div class="seller-verified">✓</div></div>
-        <div class="product-bottom"><div class="product-price">₹650 <span>/ unit</span></div><div class="product-college">Amrita</div></div>
-      </div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-img p5"><span>🍳</span><div class="product-condition cond-used">Used</div><div class="product-save">♡</div></div>
-      <div class="product-info">
-        <div class="product-category">Hostel · Kitchen</div>
-        <div class="product-name">Mini Induction Cooktop 1000W</div>
-        <div class="seller-tag"><div class="seller-avatar">M</div><div><div class="seller-name">Meena R.</div><div class="seller-branch">MECH · 4th Year</div></div><div class="seller-verified">✓</div></div>
-        <div class="product-bottom"><div class="product-price">₹380 <span>/ unit</span></div><div class="product-college">SKCET</div></div>
-      </div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-img p6"><span>📐</span><div class="product-condition cond-good">Good</div><div class="product-save">♡</div></div>
-      <div class="product-info">
-        <div class="product-category">Stationery · Drawing</div>
-        <div class="product-name">Drafter + Drawing Board Set</div>
-        <div class="seller-tag"><div class="seller-avatar">S</div><div><div class="seller-name">Surya B.</div><div class="seller-branch">CIVIL · 2nd Year</div></div><div class="seller-verified">✓</div></div>
-        <div class="product-bottom"><div class="product-price">₹350 <span>/ set</span></div><div class="product-college">PSG Tech</div></div>
-      </div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-img p7"><span>🪑</span><div class="product-condition cond-used">Used</div><div class="product-save">♡</div></div>
-      <div class="product-info">
-        <div class="product-category">Hostel · Furniture</div>
-        <div class="product-name">Foldable Study Chair — Blue</div>
-        <div class="seller-tag"><div class="seller-avatar">D</div><div><div class="seller-name">Divya N.</div><div class="seller-branch">IT · 1st Year</div></div><div class="seller-verified">✓</div></div>
-        <div class="product-bottom"><div class="product-price">₹550 <span>/ chair</span></div><div class="product-college">CIT</div></div>
-      </div>
-    </div>
+  <div class="product-grid" id="home-grid">
+    <div style="grid-column:1/-1;text-align:center;padding:3rem;opacity:.3;font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.06em;color:rgba(199,120,200,.5)">LOADING LISTINGS…</div>
 
     <div class="product-card">
       <div class="product-img p8"><span>📓</span><div class="product-condition cond-good">Good</div><div class="product-save">♡</div></div>
@@ -435,11 +336,11 @@
 <section class="section" style="padding-top:0">
   <div class="section-header"><div><div class="section-label">Shop by need</div><h2>Campus Categories</h2></div></div>
   <div class="categories-grid">
-    <div class="cat-card"><div class="cat-icon">📚</div><div class="cat-name">Textbooks</div><div class="cat-count">421 items</div></div>
-    <div class="cat-card"><div class="cat-icon">💻</div><div class="cat-name">Gadgets</div><div class="cat-count">215 items</div></div>
-    <div class="cat-card"><div class="cat-icon">🏠</div><div class="cat-name">Hostel Stuff</div><div class="cat-count">178 items</div></div>
-    <div class="cat-card"><div class="cat-icon">🔬</div><div class="cat-name">Lab Equipment</div><div class="cat-count">93 items</div></div>
-    <div class="cat-card"><div class="cat-icon">📝</div><div class="cat-name">Notes & Stationery</div><div class="cat-count">140 items</div></div>
+    <div class="cat-card" onclick="location.href='browse.html'"><div class="cat-icon">📚</div><div class="cat-name">Textbooks</div><div class="cat-count" id="cat-Textbooks">— items</div></div>
+    <div class="cat-card" onclick="location.href='browse.html'"><div class="cat-icon">💻</div><div class="cat-name">Gadgets</div><div class="cat-count" id="cat-Gadgets">— items</div></div>
+    <div class="cat-card" onclick="location.href='browse.html'"><div class="cat-icon">🏠</div><div class="cat-name">Hostel Stuff</div><div class="cat-count" id="cat-Hostel">— items</div></div>
+    <div class="cat-card" onclick="location.href='browse.html'"><div class="cat-icon">🔬</div><div class="cat-name">Lab Equipment</div><div class="cat-count" id="cat-Lab">— items</div></div>
+    <div class="cat-card" onclick="location.href='browse.html'"><div class="cat-icon">📝</div><div class="cat-name">Notes & Stationery</div><div class="cat-count" id="cat-Notes">— items</div></div>
     <div class="cat-card"><div class="cat-icon">👕</div><div class="cat-name">Clothing & Uniform</div><div class="cat-count">112 items</div></div>
   </div>
 </section>
@@ -486,5 +387,134 @@
   <span>Privacy · Terms · Contact</span>
 </div>
 
+
+<script>
+  const categoryEmoji = {
+    'Textbooks':'📗','Gadgets':'💻','Hostel':'🏠','Lab':'🔬','Notes':'📝','Clothing':'👕'
+  };
+
+  async function loadHomeListings() {
+    const { data: listings } = await _supabase
+      .from('listings')
+      .select('*, profiles(full_name, dept, year, college)')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(8);
+
+    const grid = document.getElementById('home-grid');
+    if (!listings || listings.length === 0) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;opacity:.3;font-family:\'DM Mono\',monospace;font-size:.75rem;letter-spacing:.06em;color:rgba(199,120,200,.5)">NO LISTINGS YET — BE THE FIRST TO POST!</div>';
+      return;
+    }
+    grid.innerHTML = '';
+    listings.forEach(l => {
+      const condClass = l.condition === 'Like New' ? 'cond-like-new' : l.condition === 'Good' ? 'cond-good' : 'cond-used';
+      const initial = l.profiles?.full_name?.[0]?.toUpperCase() || '?';
+      const sellerName = l.profiles?.full_name || '—';
+      const branch = [l.profiles?.dept, l.profiles?.year].filter(Boolean).join(' · ') || '—';
+      const emoji = categoryEmoji[l.category] || '📦';
+      const card = document.createElement('div');
+      card.className = 'product-card';
+      card.onclick = () => location.href = 'product.html?id=' + l.id;
+      card.innerHTML = `
+        <div class="product-img" style="background:rgba(123,45,139,.15);height:160px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">
+          ${l.image_urls?.[0]
+            ? `<img src="${l.image_urls[0]}" style="width:100%;height:100%;object-fit:cover"/>`
+            : `<span style="font-size:2.5rem;opacity:.35">${emoji}</span>`}
+          <div class="product-condition ${condClass}" style="position:absolute;top:.6rem;left:.6rem">${l.condition}</div>
+        </div>
+        <div class="product-info">
+          <div class="product-category">${l.category || ''}</div>
+          <div class="product-name">${l.title}</div>
+          <div class="seller-tag">
+            <div class="seller-avatar">${initial}</div>
+            <div><div class="seller-name">${sellerName}</div><div class="seller-branch">${branch}</div></div>
+            <div class="seller-verified">✓</div>
+          </div>
+          <div class="product-bottom">
+            <div class="product-price">₹${l.price}</div>
+            <div class="product-college">${l.college || ''}</div>
+          </div>
+        </div>`;
+      grid.appendChild(card);
+    });
+
+    // Hero preview cards
+    const previews = document.getElementById('hero-previews');
+    if (previews && listings.length > 0) {
+      previews.innerHTML = '';
+      listings.slice(0, 3).forEach(l => {
+        const emoji = categoryEmoji[l.category] || '📦';
+        const meta = [l.profiles?.full_name?.split(' ')[0], l.profiles?.dept, l.profiles?.year, l.college].filter(Boolean).join(' · ');
+        const div = document.createElement('div');
+        div.className = 'listing-preview';
+        div.onclick = () => location.href = 'product.html?id=' + l.id;
+        div.innerHTML = `
+          <div class="lp-emoji">${emoji}</div>
+          <div class="lp-info">
+            <div class="lp-name">${l.title}</div>
+            <div class="lp-meta">${meta}</div>
+          </div>
+          <div class="lp-right">
+            <div class="lp-price">₹${l.price}</div>
+            <div class="lp-badge">${l.condition}</div>
+          </div>`;
+        previews.appendChild(div);
+      });
+    }
+
+    // Hero stats
+    document.getElementById('hero-count').textContent = listings.length + '+';
+    const avg = listings.reduce((s, l) => s + Number(l.price), 0) / listings.length;
+    document.getElementById('hero-avg').textContent = '₹' + Math.round(avg);
+    document.getElementById('hero-students').textContent = listings.length * 2 + '+';
+  }
+
+  async function loadRealStats() {
+    // Total active listings
+    const { count: totalListings } = await _supabase
+      .from('listings').select('*', { count: 'exact', head: true })
+      .eq('status', 'active');
+
+    // Total sold listings
+    const { count: totalSold } = await _supabase
+      .from('listings').select('*', { count: 'exact', head: true })
+      .eq('status', 'sold');
+
+    // Total unique students (profiles)
+    const { count: totalStudents } = await _supabase
+      .from('profiles').select('*', { count: 'exact', head: true });
+
+    // Average price
+    const { data: priceData } = await _supabase
+      .from('listings').select('price').eq('status', 'active');
+    const avg = priceData?.length
+      ? Math.round(priceData.reduce((s, l) => s + Number(l.price), 0) / priceData.length)
+      : 0;
+
+    // Update hero stats
+    if (document.getElementById('stat-students'))
+      document.getElementById('stat-students').textContent = totalStudents || 0;
+    if (document.getElementById('stat-listings'))
+      document.getElementById('stat-listings').textContent = totalListings || 0;
+    if (document.getElementById('stat-avg'))
+      document.getElementById('stat-avg').textContent = avg ? '₹' + avg : '—';
+    if (document.getElementById('stat-sold'))
+      document.getElementById('stat-sold').textContent = totalSold || 0;
+
+    // Category counts
+    const categories = ['Textbooks','Gadgets','Hostel','Lab','Notes','Clothing'];
+    for (const cat of categories) {
+      const { count } = await _supabase
+        .from('listings').select('*', { count: 'exact', head: true })
+        .eq('category', cat).eq('status', 'active');
+      const el = document.getElementById('cat-' + cat);
+      if (el) el.textContent = (count || 0) + ' items';
+    }
+  }
+
+  loadHomeListings();
+  loadRealStats();
+</script>
 </body>
 </html>
